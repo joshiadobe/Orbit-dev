@@ -1,0 +1,646 @@
+
+:root {
+  /* ---------- COLORS ---------- */
+
+  --ai-bg: #1f1f1f;
+  --ai-bg-secondary: #2a2a2a;
+  --ai-bg-tertiary: #333;
+
+  --ai-text: #ffffff;
+  --ai-text-muted: #aaaaaa;
+
+  --ai-border: #444;
+  --ai-border-light: #666;
+
+  --ai-red: #ff6b6b;
+  --ai-green: #50fa7b;
+  --ai-orange: #ffb86c;
+  --ai-blue: #6cb6ff;
+  --ai-pink: #ff79c6;
+
+  /* ---------- SPACING ---------- */
+
+  --ai-radius-sm: 6px;
+  --ai-radius-md: 8px;
+  --ai-radius-lg: 10px;
+  --ai-radius-xl: 14px;
+
+  /* ---------- SHADOWS ---------- */
+
+  --ai-shadow-sm:
+    0 4px 12px rgba(0,0,0,0.4);
+
+  --ai-shadow-lg:
+    0 10px 30px rgba(0,0,0,0.5);
+
+  /* ---------- TRANSITIONS ---------- */
+
+  --ai-transition:
+    all 0.15s ease;
+
+  /* ---------- TYPOGRAPHY ---------- */
+
+  --ai-font:
+    system-ui,
+    -apple-system,
+    sans-serif;
+}
+
+/* =========================================================
+   GLOBAL RESET / SCOPING
+========================================================= */
+
+#ai-box,
+#ai-box *,
+#ai-menu,
+#ai-menu * {
+  box-sizing: border-box;
+  text-transform: none !important;
+}
+
+/* =========================================================
+   FLOAT BUTTON
+========================================================= */
+
+#ai-btn {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+
+  width: 48px;
+  height: 48px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: #111;
+  color: var(--ai-text);
+
+  border-radius: 50%;
+
+  cursor: pointer;
+
+  z-index: 2147483647;
+
+  font-size: 18px;
+
+  box-shadow: var(--ai-shadow-sm);
+
+  transition: var(--ai-transition);
+}
+
+#ai-btn:hover {
+  transform: scale(1.08);
+}
+
+/* =========================================================
+   PANEL
+========================================================= */
+
+#ai-box {
+  position: fixed;
+
+  bottom: 70px;
+  right: 20px;
+
+  width: 360px;
+  height: 480px;
+
+  display: none;
+  flex-direction: column;
+
+  background: var(--ai-bg);
+
+  color: var(--ai-text);
+
+  border-radius: var(--ai-radius-xl);
+
+  overflow: hidden;
+
+  z-index: 2147483647;
+
+  font-family: var(--ai-font);
+
+  font-size: 13px;
+
+  box-shadow: var(--ai-shadow-lg);
+
+  transition:
+    width 0.2s ease,
+    height 0.2s ease;
+}
+
+#ai-box.expanded {
+  width: 700px;
+  height: 80vh;
+  font-size: 15px;
+}
+
+/* =========================================================
+   HEADER
+========================================================= */
+
+#ai-header {
+  display: flex;
+  flex-direction: column;
+
+  gap: 8px;
+
+  padding: 12px;
+
+  border-bottom: 1px solid var(--ai-border);
+}
+
+#ai-header span {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+#ai-header div {
+  display: flex;
+  flex-wrap: wrap;
+
+  gap: 6px;
+}
+
+/* =========================================================
+   BUTTONS
+========================================================= */
+
+#ai-header button,
+#ai-input-box button,
+.ai-copy-btn,
+.ai-menu-close {
+  border: none;
+
+  cursor: pointer;
+
+  transition: var(--ai-transition);
+}
+
+#ai-header button {
+  background: var(--ai-bg-secondary);
+
+  color: #ddd;
+
+  padding: 6px 10px;
+
+  border-radius: var(--ai-radius-md);
+
+  font-size: 12px;
+}
+
+#ai-header button:hover {
+  background: #3a3a3a;
+}
+
+.btn-clear {
+  background: #b33 !important;
+  color: white !important;
+}
+
+.btn-clear:hover {
+  background: #d44 !important;
+}
+
+/* =========================================================
+   CHAT CONTAINER
+========================================================= */
+
+#ai-chat {
+  flex: 1;
+  min-height: 0;
+
+  overflow-y: auto;
+  overflow-x: hidden;
+
+  padding: 12px;
+
+  display: flex;
+  flex-direction: column;
+
+  gap: 10px;
+
+  scroll-behavior: smooth;
+}
+
+/* =========================================================
+   MESSAGE
+========================================================= */
+
+.ai-msg {
+  position: relative;
+
+  width: 100%;
+
+  padding: 12px;
+
+  background: var(--ai-bg-secondary);
+
+  border-radius: var(--ai-radius-lg);
+
+  line-height: 1.6;
+
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+
+/* =========================================================
+   MARKDOWN
+========================================================= */
+
+.ai-msg p {
+  margin: 8px 0;
+}
+
+/* ---------- HEADINGS ---------- */
+
+.ai-msg h1,
+.ai-msg h2,
+.ai-msg h3,
+.ai-msg h4 {
+  margin: 14px 0 10px;
+
+  color: var(--ai-text);
+
+  font-weight: 700;
+
+  line-height: 1.4;
+
+  letter-spacing: normal !important;
+}
+
+.ai-msg h1 {
+  font-size: 22px;
+}
+
+.ai-msg h2 {
+  font-size: 19px;
+}
+
+.ai-msg h3 {
+  font-size: 16px;
+}
+
+/* ---------- LISTS ---------- */
+
+.ai-msg ul,
+.ai-msg ol {
+  margin: 8px 0;
+  padding-left: 22px;
+}
+
+.ai-msg li {
+  margin-bottom: 6px;
+}
+
+/* ---------- BLOCKQUOTE ---------- */
+
+.ai-msg blockquote {
+  margin: 12px 0;
+
+  padding: 10px 12px;
+
+  border-left: 3px solid var(--ai-orange);
+
+  border-radius: var(--ai-radius-md);
+
+  background:
+    rgba(255, 184, 108, 0.08);
+
+  color: #f1f1f1;
+}
+
+/* ---------- HORIZONTAL RULE ---------- */
+
+.ai-msg hr {
+  margin: 12px 0;
+
+  border: none;
+  border-top: 1px solid var(--ai-border);
+}
+
+/* =========================================================
+   TABLES
+========================================================= */
+
+.ai-msg table {
+  width: 100%;
+
+  display: block;
+
+  overflow-x: auto;
+
+  border-collapse: collapse;
+
+  margin: 12px 0;
+
+  font-size: 13px;
+}
+
+.ai-msg th,
+.ai-msg td {
+  padding: 8px;
+
+  border: 1px solid var(--ai-border);
+
+  text-align: left;
+  vertical-align: top;
+}
+
+.ai-msg th {
+  background: var(--ai-bg-tertiary);
+
+  font-weight: 600;
+}
+
+.ai-msg tr:nth-child(even) {
+  background:
+    rgba(255,255,255,0.02);
+}
+
+/* =========================================================
+   CODE / TECH IDENTIFIERS
+========================================================= */
+
+.ai-msg code {
+  background:
+    rgba(255, 121, 198, 0.12);
+
+  color: var(--ai-pink);
+
+  border:
+    1px solid rgba(255, 121, 198, 0.25);
+
+  padding: 2px 6px;
+
+  border-radius: var(--ai-radius-sm);
+
+  font-size: 12px;
+
+  font-family:
+    Consolas,
+    monospace;
+
+  word-break: break-word;
+}
+
+.ai-msg pre {
+  margin: 10px 0;
+
+  padding: 12px;
+
+  overflow-x: auto;
+
+  background: #111;
+
+  border-radius: var(--ai-radius-md);
+}
+
+.ai-msg pre code {
+  background: transparent;
+  border: none;
+  padding: 0;
+}
+
+/* =========================================================
+   LINKS
+========================================================= */
+
+.ai-msg a,
+.ai-link {
+  color: var(--ai-blue);
+
+  text-decoration: none;
+
+  background:
+    rgba(108, 182, 255, 0.08);
+
+  border:
+    1px solid rgba(108, 182, 255, 0.18);
+
+  padding: 1px 5px;
+
+  border-radius: var(--ai-radius-sm);
+
+  word-break: break-word;
+
+  transition: var(--ai-transition);
+}
+
+.ai-msg a:hover,
+.ai-link:hover {
+  background:
+    rgba(108, 182, 255, 0.16);
+}
+
+/* =========================================================
+   COPY BUTTON
+========================================================= */
+
+.ai-copy-btn {
+  margin-top: 8px;
+
+  padding: 4px 8px;
+
+  border: 1px solid var(--ai-border);
+
+  border-radius: var(--ai-radius-sm);
+
+  background: transparent;
+
+  color: var(--ai-text-muted);
+
+  font-size: 11px;
+}
+
+.ai-copy-btn:hover {
+  color: var(--ai-text);
+
+  border-color: var(--ai-border-light);
+}
+
+/* =========================================================
+   INPUT
+========================================================= */
+
+#ai-input-box {
+  display: flex;
+
+  gap: 6px;
+
+  padding: 10px;
+
+  flex-shrink: 0;
+
+  border-top:
+    1px solid var(--ai-border);
+
+  background: #1a1a1a;
+}
+
+#ai-input-box input {
+  flex: 1;
+
+  padding: 10px;
+
+  border: none;
+
+  border-radius: var(--ai-radius-md);
+
+  background: var(--ai-bg-secondary);
+
+  color: var(--ai-text);
+
+  font-size: 14px;
+}
+
+#ai-box.expanded #ai-input-box input {
+  font-size: 16px;
+}
+
+#ai-input-box input::placeholder {
+  color: var(--ai-text-muted);
+}
+
+#ai-input-box input:focus {
+  outline: none;
+
+  box-shadow:
+    0 0 0 1px #4caf50;
+}
+
+#ai-input-box button {
+  padding: 8px 12px;
+
+  border-radius: var(--ai-radius-md);
+
+  background: #4caf50;
+
+  color: white;
+
+  font-size: 13px;
+}
+
+#ai-input-box button:hover {
+  background: #5ecf62;
+}
+
+#ai-box.expanded #ai-input-box button {
+  padding: 10px 14px;
+
+  font-size: 14px;
+}
+
+/* =========================================================
+   STATES
+========================================================= */
+
+.processing-msg {
+  opacity: 0.7;
+  font-style: italic;
+}
+
+.error-msg {
+  background: #3a1f1f;
+  color: var(--ai-red);
+}
+
+/* =========================================================
+   MENU
+========================================================= */
+
+#ai-menu {
+  min-width: 220px;
+
+  padding: 6px;
+
+  background: var(--ai-bg-secondary);
+
+  border:
+    1px solid var(--ai-border);
+
+  border-radius: var(--ai-radius-lg);
+
+  box-shadow:
+    0 8px 24px rgba(0,0,0,0.4);
+
+  z-index: 2147483647;
+}
+
+/* ---------- MENU HEADER ---------- */
+
+.ai-menu-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  padding: 4px 6px 10px;
+
+  margin-bottom: 6px;
+
+  border-bottom:
+    1px solid var(--ai-border);
+}
+
+.ai-menu-header span {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+/* ---------- MENU CLOSE ---------- */
+
+.ai-menu-close {
+  background: transparent !important;
+
+  color: var(--ai-text-muted) !important;
+
+  padding: 2px 6px !important;
+
+  font-size: 14px;
+}
+
+.ai-menu-close:hover {
+  color: var(--ai-text) !important;
+}
+
+/* ---------- MENU ITEMS ---------- */
+
+.ai-menu-item {
+  padding: 8px 10px;
+
+  border-radius: var(--ai-radius-sm);
+
+  color: #ddd;
+
+  cursor: pointer;
+
+  transition: var(--ai-transition);
+}
+
+.ai-menu-item:hover {
+  background: #3a3a3a;
+}
+
+/* =========================================================
+   SCROLLBAR
+========================================================= */
+
+#ai-chat::-webkit-scrollbar {
+  width: 8px;
+}
+
+#ai-chat::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+#ai-chat::-webkit-scrollbar-thumb {
+  background: var(--ai-border);
+
+  border-radius: 10px;
+}
+
+#ai-chat::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
