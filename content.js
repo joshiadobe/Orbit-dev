@@ -98,9 +98,14 @@ function getPageKey() {
 }
 
 function getStorageKey() {
-  return TAB_ID + "::" + getPageKey();
-}
+  const caseId = getCaseId();
 
+  if (caseId) {
+    return "case::" + caseId;
+  }
+
+  return "page::" + getPageKey();
+}
 function saveMessages(messages, responseId) {
   chrome.storage.local.get(["responses"], (data) => {
     const responses = data.responses || {};
