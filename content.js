@@ -44,20 +44,20 @@ if (!MarkdownIt) {
 
 let md = MarkdownIt
   ? MarkdownIt({
-      html: false,
-      linkify: true,
-      breaks: true
-    })
+    html: false,
+    linkify: true,
+    breaks: true
+  })
   : null;
 
 if (md) {
   const defaultRender =
     md.renderer.rules.link_open ||
-    function(tokens, idx, options, env, self) {
+    function (tokens, idx, options, env, self) {
       return self.renderToken(tokens, idx, options);
     };
 
-  md.renderer.rules.link_open = function(tokens, idx, options, env, self) {
+  md.renderer.rules.link_open = function (tokens, idx, options, env, self) {
     const token = tokens[idx];
 
     token.attrSet("target", "_blank");
@@ -211,9 +211,9 @@ function updatePrimaryButton() {
 function handlePrimaryClick() {
   const action = getPrimaryAction();
 
-  
+
   const text = getRelevantText();
-  
+
 
   if (!text) {
     addMessage("⚠️ No case content found.", "system");
@@ -392,7 +392,7 @@ function createUI() {
     },
     {
       label: "FTS Notes",
-      prompt : "perpare FTS notes in less than 100 words \n\n"
+      prompt: "perpare FTS notes in less than 100 words \n\n"
     },
     {
       label: "Case Closuer",
@@ -419,13 +419,13 @@ function createUI() {
 
       item.onclick = function () {
         const text = getRelevantText();
-        
-        
+
+
         if (!text) return;
-        
+
         // attach description or not 
         // const prompt = buildFinalPrompt(action.prompt, text);
-        const prompt = buildFinalPrompt(action.prompt,"");
+        const prompt = buildFinalPrompt(action.prompt, "");
 
         addMessage(action.label, "system");
 
@@ -609,7 +609,72 @@ function addMessage(text, role) {
 
   scrollToBottom();
 }
+/* ---------- TYPING EFFECT ---------- */
 
+function typeMessage(text, role = "ai", speed = 8) {
+  const wrapper = document.createElement("div");
+  wrapper.className = "ai-msg";
+
+  const content = document.createElement("div");
+  wrapper.appendChild(content);
+
+  chatContainer.appendChild(wrapper);
+
+  scrollToBottom();
+
+  let current = "";
+  let index = 0;
+
+  const interval = setInterval(() => {
+    current += text[index];
+    index++;
+
+    let rendered = false;
+
+    if (md) {
+      try {
+        const clean = normalizeMarkdownTables(current);
+        content.innerHTML = md.render(clean);
+        rendered = true;
+      } catch (e) { }
+    }
+
+    if (!rendered) {
+      content.textContent = current;
+    }
+
+    scrollToBottom();
+
+    if (index >= text.length) {
+      clearInterval(interval);
+
+      // add copy button after typing completes
+      if (role === "ai") {
+        const copyBtn = document.createElement("button");
+
+        copyBtn.className = "ai-copy-btn";
+        copyBtn.textContent = "Copy";
+
+        copyBtn.onclick = async () => {
+          try {
+            await navigator.clipboard.writeText(text);
+
+            copyBtn.textContent = "Copied!";
+
+            setTimeout(() => {
+              copyBtn.textContent = "Copy";
+            }, 1500);
+
+          } catch (err) {
+            console.error(err);
+          }
+        };
+
+        wrapper.appendChild(copyBtn);
+      }
+    }
+  }, speed);
+}
 /* ---------- SEND ---------- */
 
 function handleSend(input) {
@@ -632,7 +697,21 @@ function sendToAI(prompt, forceFresh) {
   const loading = document.createElement("div");
 
   loading.className = "ai-msg processing-msg";
-  loading.textContent = getRandomProcessingMessage();
+
+  const baseMessage =
+    getRandomProcessingMessage();
+
+  let dots = 0;
+
+  loading.textContent = baseMessage;
+
+  const dotsInterval = setInterval(() => {
+    dots = (dots + 1) % 4;
+
+    loading.textContent =
+      baseMessage + ".".repeat(dots);
+
+  }, 500);
 
   chatContainer.appendChild(loading);
 
@@ -669,6 +748,7 @@ function sendToAI(prompt, forceFresh) {
         history: messages
       },
       res => {
+        clearInterval(dotsInterval);
         loading.remove();
 
         scrollToBottom();
@@ -681,11 +761,11 @@ function sendToAI(prompt, forceFresh) {
         const aiText = res.data.text;
         log("AI", aiText);
 
-        addMessage(aiText, "ai");
+        typeMessage(aiText, "ai");
 
         addMessage(
           "⚙️ Context Mode: " +
-            res.data.contextMode,
+          res.data.contextMode,
           "system"
         );
 
