@@ -1,4 +1,5 @@
 
+
 :root {
   /* ---------- COLORS ---------- */
 
@@ -41,6 +42,7 @@
   /* ---------- TYPOGRAPHY ---------- */
 
   --ai-font:
+    "Segoe UI",
     system-ui,
     -apple-system,
     sans-serif;
@@ -88,6 +90,8 @@
   box-shadow: var(--ai-shadow-sm);
 
   transition: var(--ai-transition);
+
+  font-family: var(--ai-font);
 }
 
 #ai-btn:hover {
@@ -154,7 +158,7 @@
 
 #ai-header span {
   font-size: 14px;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 #ai-header div {
@@ -177,6 +181,12 @@
   cursor: pointer;
 
   transition: var(--ai-transition);
+
+  font-family: var(--ai-font);
+
+  font-weight: 500;
+
+  letter-spacing: 0.1px;
 }
 
 #ai-header button {
@@ -240,7 +250,7 @@
 
   border-radius: var(--ai-radius-lg);
 
-  line-height: 1.6;
+  line-height: 1.7;
 
   word-break: break-word;
   overflow-wrap: anywhere;
@@ -465,7 +475,6 @@
    INPUT
 ========================================================= */
 
-
 #ai-input-box {
   display: flex;
 
@@ -601,7 +610,7 @@
 
 .ai-menu-header span {
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 /* ---------- MENU CLOSE ---------- */
@@ -632,6 +641,8 @@
   cursor: pointer;
 
   transition: var(--ai-transition);
+
+  font-weight: 500;
 }
 
 .ai-menu-item:hover {
