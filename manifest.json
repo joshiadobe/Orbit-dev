@@ -3,17 +3,15 @@
   "name": "Orbit",
   "version": "8.0",
   "description": "AI assistant for Dynamics tickets",
-
-  "permissions": ["storage"],
-
+  "permissions": [
+    "storage"
+  ],
   "host_permissions": [
     "http://10.51.242.50:3000/*"
   ],
-
   "background": {
     "service_worker": "background.js"
   },
-
   "content_scripts": [
     {
       "matches": [
@@ -24,14 +22,10 @@
         "markdown-it.min.js",
         "content.js"
       ],
-      "css": ["styles.css"],
+      "css": [
+        "styles.css"
+      ],
       "run_at": "document_idle"
     }
-  ],
-  "web_accessible_resources": [
-  {
-    "resources": ["fonts/*"],
-    "matches": ["<all_urls>"]
-  }
-]
+  ]
 }
