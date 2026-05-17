@@ -334,8 +334,14 @@ function createUI() {
   const inputBox = document.createElement("div");
   inputBox.id = "ai-input-box";
 
-  const input = document.createElement("input");
-  input.placeholder = "Ask follow-up...";
+  const input = document.createElement("textarea");
+
+  input.placeholder =
+    "Ask Orbit anything about this case...";
+
+  input.rows = 1;
+
+  input.id = "ai-input";
 
   const sendBtn = document.createElement("button");
   sendBtn.textContent = "Send";
@@ -493,11 +499,22 @@ function createUI() {
     handleSend(input);
   };
 
+  input.addEventListener("input", () => {
+  input.style.height = "auto";
+
+  input.style.height =
+    Math.min(input.scrollHeight, 160) + "px";
+});
+
   input.addEventListener("keydown", function (e) {
-    if (e.key === "Enter") {
-      handleSend(input);
-    }
-  });
+
+  if (e.key === "Enter" && !e.shiftKey) {
+    e.preventDefault();
+
+    handleSend(input);
+  }
+
+});
 }
 
 /* ---------- CHAT ---------- */

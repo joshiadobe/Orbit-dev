@@ -465,10 +465,13 @@
    INPUT
 ========================================================= */
 
+
 #ai-input-box {
   display: flex;
 
-  gap: 6px;
+  align-items: flex-end;
+
+  gap: 8px;
 
   padding: 10px;
 
@@ -480,31 +483,41 @@
   background: #1a1a1a;
 }
 
-#ai-input-box input {
+#ai-input {
   flex: 1;
 
-  padding: 10px;
+  resize: none;
+
+  min-height: 40px;
+  max-height: 160px;
+
+  overflow-y: auto;
+
+  padding: 10px 12px;
 
   border: none;
 
-  border-radius: var(--ai-radius-md);
+  border-radius: 12px;
 
   background: var(--ai-bg-secondary);
 
   color: var(--ai-text);
 
   font-size: 14px;
+  line-height: 1.5;
+
+  font-family: inherit;
 }
 
-#ai-box.expanded #ai-input-box input {
+#ai-box.expanded #ai-input {
   font-size: 16px;
 }
 
-#ai-input-box input::placeholder {
+#ai-input::placeholder {
   color: var(--ai-text-muted);
 }
 
-#ai-input-box input:focus {
+#ai-input:focus {
   outline: none;
 
   box-shadow:
@@ -521,6 +534,8 @@
   color: white;
 
   font-size: 13px;
+
+  flex-shrink: 0;
 }
 
 #ai-input-box button:hover {
