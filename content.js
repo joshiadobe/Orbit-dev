@@ -337,7 +337,7 @@ function createUI() {
   const input = document.createElement("textarea");
 
   input.placeholder =
-    "Ask Orbit anything about this case...";
+    "Ask Orbit anything about this case 🚀";
 
   input.rows = 1;
 
