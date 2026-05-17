@@ -399,15 +399,15 @@ function createUI() {
     },
     {
       label: "Close Escalation",
-      prompt: "give me 1 liner each point for this case Issue Summary Customer Impact Root Cause Corrective Action\n\n"
+      prompt: "give me 1 liner each point for this case Issue Summary Customer Impact Root Cause Corrective Action in past tense imperative\n\n"
     },
     {
       label: "FTS Notes",
-      prompt: "perpare FTS notes in less than 100 words \n\n"
+      prompt: "perpare FTS notes in less than 100 words so it can be shared with next geo engineer who will work on this case \n\n"
     },
     {
       label: "Case Closuer",
-      prompt: "Skim thorugh the complete ticket and Please provide details about case resolution, this will be customer facing in less then 100 words make a final response that can be shared with client \n\n"
+      prompt: "Skim thorugh the complete ticket and Please provide details about case resolution, this will be customer facing in less then 100 words make a final response that can be shared with client in past tense imparative \n\n"
     }
   ];
 
@@ -832,11 +832,38 @@ function loadSavedChat() {
 
 /* ---------- INIT ---------- */
 
+/* ---------- INIT ---------- */
+
 function init() {
   createUI();
+
   createButton();
 
-  setInterval(updatePrimaryButton, 1000);
+  updatePrimaryButton();
+
+  /* ---------- PAGE CHANGE DETECTION ---------- */
+
+  let lastUrl = location.href;
+
+  const observer = new MutationObserver(() => {
+
+    if (location.href !== lastUrl) {
+
+      lastUrl = location.href;
+
+      log("NAV", "Page changed");
+
+      updatePrimaryButton();
+
+      loadSavedChat();
+    }
+
+  });
+
+  observer.observe(document.body, {
+    childList: true,
+    subtree: true
+  });
 }
 
 function createButton() {
