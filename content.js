@@ -532,21 +532,21 @@ function createUI() {
   };
 
   input.addEventListener("input", () => {
-  input.style.height = "auto";
+    input.style.height = "auto";
 
-  input.style.height =
-    Math.min(input.scrollHeight, 160) + "px";
-});
+    input.style.height =
+      Math.min(input.scrollHeight, 160) + "px";
+  });
 
   input.addEventListener("keydown", function (e) {
 
-  if (e.key === "Enter" && !e.shiftKey) {
-    e.preventDefault();
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
 
-    handleSend(input);
-  }
+      handleSend(input);
+    }
 
-});
+  });
 }
 
 /* ---------- CHAT ---------- */
@@ -894,8 +894,6 @@ function loadSavedChat() {
 
 /* ---------- INIT ---------- */
 
-/* ---------- INIT ---------- */
-
 function init() {
   createUI();
 
@@ -905,21 +903,43 @@ function init() {
 
   /* ---------- PAGE CHANGE DETECTION ---------- */
 
+
   let lastUrl = location.href;
+
+  let navTimeout;
 
   const observer = new MutationObserver(() => {
 
-    if (location.href !== lastUrl) {
+    clearTimeout(navTimeout);
 
-      lastUrl = location.href;
+    navTimeout = setTimeout(() => {
 
-      log("NAV", "Page changed");
+      if (location.href !== lastUrl) {
 
-      updatePrimaryButton();
+        lastUrl = location.href;
 
-      loadSavedChat();
-    }
+        log("NAV", "Page changed");
 
+        updatePrimaryButton();
+
+        loadSavedChat();
+
+        window.Analytics?.track(
+          "orbit.case.changed",
+          {
+            caseId: getCaseId(),
+            url: location.href
+          }
+        );
+      }
+
+    }, 300);
+
+  });
+
+  observer.observe(document.body, {
+    childList: true,
+    subtree: true
   });
 
   observer.observe(document.body, {
@@ -941,7 +961,7 @@ function createButton() {
     panel.style.display = open
       ? "none"
       : "flex";
-    
+
     Analytics.track("orbit.panel.toggle", {
       state: open ? "closed" : "opened",
       caseId: getCaseId()
