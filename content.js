@@ -239,6 +239,12 @@ function handlePrimaryClick() {
 
   addMessage("⚡ " + action.label, "system");
 
+  Analytics.track("orbit.primary.clicked", {
+    caseId: getCaseId(),
+    buttonName: action.label,
+    promptType: "primary"
+  });
+
   sendToAI(prompt, true);
 }
 
@@ -450,6 +456,12 @@ function createUI() {
 
         addMessage(action.label, "system");
 
+        Analytics.track("orbit.menu.clicked", {
+          caseId: getCaseId(),
+          buttonName: action.label,
+          promptType: "menu_action"
+        });
+
         sendToAI(prompt);
 
         menu.style.display = "none";
@@ -483,6 +495,9 @@ function createUI() {
   primaryBtn.onclick = handlePrimaryClick;
 
   clearBtn.onclick = function () {
+    Analytics.track("orbit.chat.clear", {
+      caseId: getCaseId()
+    });
     chatContainer.innerHTML = "";
 
     loadMessages(entry => {
@@ -491,11 +506,18 @@ function createUI() {
   };
 
   newChatBtn.onclick = function () {
+    Analytics.track("orbit.chat.new", {
+      caseId: getCaseId()
+    });
     chatContainer.innerHTML = "";
     saveMessages([], null);
   };
 
   resizeBtn.onclick = function () {
+    Analytics.track("orbit.panel.resize", {
+      caseId: getCaseId(),
+      expanded: !expanded
+    });
     expanded = !expanded;
 
     panel.classList.toggle("expanded");
@@ -577,6 +599,9 @@ function addMessage(text, role) {
     copyBtn.textContent = "Copy";
 
     copyBtn.onclick = async () => {
+      Analytics.track("orbit.copy.clicked", {
+        caseId: getCaseId()
+      });
       try {
         const clone = content.cloneNode(true);
 
@@ -720,6 +745,11 @@ function handleSend(input) {
 
   addMessage(text, "user");
 
+  Analytics.track("orbit.followup.sent", {
+    caseId: getCaseId(),
+    inputLength: text.length
+  });
+
   sendToAI(prompt);
 }
 
@@ -771,6 +801,14 @@ function sendToAI(prompt, forceFresh) {
       log("CTX", "Fresh");
     }
 
+    const requestStartTime = performance.now();
+
+    Analytics.track("orbit.ai.request", {
+      caseId: getCaseId(),
+      promptLength: prompt.length,
+      freshContext: fresh
+    });
+
     chrome.runtime.sendMessage(
       {
         type: "AI_CALL",
@@ -786,11 +824,25 @@ function sendToAI(prompt, forceFresh) {
         scrollToBottom();
 
         if (!res || !res.success) {
+          Analytics.track("orbit.ai.error", {
+            caseId: getCaseId(),
+            error: res?.error || "Unknown"
+          });
           addMessage("❌ Error");
           return;
         }
 
         const aiText = res.data.text;
+        const duration =
+          Math.round(performance.now() - requestStartTime);
+
+        Analytics.track("orbit.ai.response", {
+          caseId: getCaseId(),
+          responseLength: aiText.length,
+          duration,
+          success: true,
+          contextMode: res.data.contextMode
+        });
         log("AI", aiText);
 
         typeMessage(aiText, "ai");
@@ -889,6 +941,11 @@ function createButton() {
     panel.style.display = open
       ? "none"
       : "flex";
+    
+    Analytics.track("orbit.panel.toggle", {
+      state: open ? "closed" : "opened",
+      caseId: getCaseId()
+    });
 
     // CLOSE MENU
     const menu =
