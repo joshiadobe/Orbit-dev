@@ -7,7 +7,17 @@ const PROCESSING_MESSAGES = [
   "💪 Doing the heavy lifting",
   "😴 Waking up the minions",
   "📞 You are number 2843684714 in the queue",
-  "💸 Our premium plan is faster"
+  "Swapping time and space",
+  "Don't worry - a few bits tried to escape, but we caught them",
+  "The server is powered by a lemon and two electrodes",
+  "Just count to 10",
+  "I feel like im supposed to be loading something",
+  "Keeping all the 1's and removing all the 0's",
+  "Convincing AI not to turn evil",
+  "Distracted by cat gifs",
+  "Go ahead, hold your breath and do an ironman plank till loading complete",
+  "Fact: Alt-F4 speeds things up, try",
+  "Discovering new ways of making you wait",
 ];
 
 let lastProcessingIndex = -1;
@@ -383,11 +393,11 @@ function createUI() {
   const AI_ACTIONS = [
     {
       label: "Executive Summary",
-      prompt: "Provide executive summary in markdown.\n\n"
+      prompt: "Provide executive summary in markdown. Non techinical summary for leadership in 5 points and summary of case time line in table as well\n\n"
     },
     {
       label: "Find Relevant JIRA",
-      prompt: "Suggest relevant JIRA.\n\n"
+      prompt: "Suggest relevant JIRA. Priotise any similar open jira, what thsese jira are similar summarise all that info in table as well also show the status of the JIRAs\n\n"
     },
     {
       label: "Similar Cases",
@@ -406,7 +416,7 @@ function createUI() {
       prompt: "perpare FTS notes in less than 100 words so it can be shared with next geo engineer who will work on this case \n\n"
     },
     {
-      label: "Case Closuer",
+      label: "Case Closure",
       prompt: "Skim thorugh the complete ticket and Please provide details about case resolution, this will be customer facing in less then 100 words make a final response that can be shared with client in past tense imparative \n\n"
     }
   ];
