@@ -146,7 +146,9 @@ function scrollToBottom() {
 /* ---------- HELPERS ---------- */
 
 function getTextarea() {
-  return document.querySelector("textarea");
+
+  return [...document.querySelectorAll("textarea")]
+    .find(el => el.id !== "ai-input");
 }
 
 function hasTimelineItems() {

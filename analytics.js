@@ -189,49 +189,48 @@ async function track(
 
               props: {
 
-                prop1:
+                prop6:
                   payload.caseId || "",
 
-                prop2:
+
+                prop7:
+                  getEngineerName(),
+                prop9:
                   eventName || "",
 
-                prop3:
+                prop8:
                   payload.buttonName || "",
 
-                prop4:
-                  payload.promptType || "",
-
-                prop5:
+                prop10:
                   payload.contextMode || "",
 
-                prop6:
+                prop11:
+                  payload.promptType || "",
+                prop12:
+                  chrome.runtime.getManifest().version,
+
+                prop13:
+                  payload.error || "",
+                prop81:
                   String(
                     payload.duration || ""
                   ),
-
-                prop7:
-                  String(
-                    payload.success || ""
-                  ),
-
-                prop8:
-                  payload.error || ""
               },
 
-              eVars: {
+              // eVars: {
 
-                eVar1:
-                  payload.caseId || "",
+              //   eVar1:
+              //     payload.caseId || "",
 
-                eVar2:
-                  getEngineerName(),
+              //   eVar2:
+              //     getEngineerName(),
 
-                eVar3:
-                  eventName || "",
+              //   eVar3:
+              //     eventName || "",
 
-                eVar4:
-                  chrome.runtime.getManifest().version
-              }
+              //   eVar4:
+              //     chrome.runtime.getManifest().version
+              // }
             }
           }
         }
