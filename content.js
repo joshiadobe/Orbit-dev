@@ -713,19 +713,115 @@ function typeMessage(text, role = "ai", speed = 8) {
         copyBtn.textContent = "Copy";
 
         copyBtn.onclick = async () => {
-          try {
-            await navigator.clipboard.writeText(text);
 
-            copyBtn.textContent = "Copied!";
+  window.Analytics?.track(
+    "orbit.copy.clicked",
+    {
+      caseId: getCaseId()
+    }
+  );
 
-            setTimeout(() => {
-              copyBtn.textContent = "Copy";
-            }, 1500);
+  try {
 
-          } catch (err) {
-            console.error(err);
-          }
-        };
+    const clone =
+      content.cloneNode(true);
+
+    clone.querySelectorAll("table")
+      .forEach(table => {
+
+        table.style.borderCollapse =
+          "collapse";
+
+        table.style.width = "100%";
+
+        table.style.fontFamily =
+          "Arial, sans-serif";
+
+        table.style.fontSize =
+          "13px";
+      });
+
+    clone.querySelectorAll("th, td")
+      .forEach(cell => {
+
+        cell.style.border =
+          "1px solid #ccc";
+
+        cell.style.padding =
+          "6px";
+
+        cell.style.textAlign =
+          "left";
+      });
+
+    clone.querySelectorAll("th")
+      .forEach(th => {
+
+        th.style.background =
+          "#f5f5f5";
+
+        th.style.fontWeight =
+          "bold";
+      });
+
+    clone.querySelectorAll("p")
+      .forEach(p => {
+
+        p.style.margin = "6px 0";
+      });
+
+    const htmlContent = `
+      <div style="
+        font-family: Arial, sans-serif;
+        font-size: 13px;
+        color: #000;
+      ">
+        ${clone.innerHTML}
+      </div>
+    `;
+
+    const plainText =
+      clone.innerText;
+
+    await navigator.clipboard.write([
+      new ClipboardItem({
+
+        "text/html":
+          new Blob(
+            [htmlContent],
+            {
+              type: "text/html"
+            }
+          ),
+
+        "text/plain":
+          new Blob(
+            [plainText],
+            {
+              type: "text/plain"
+            }
+          )
+      })
+    ]);
+
+    copyBtn.textContent =
+      "Copied!";
+
+    setTimeout(() => {
+
+      copyBtn.textContent =
+        "Copy";
+
+    }, 1500);
+
+  } catch (err) {
+
+    console.error(
+      "Copy failed",
+      err
+    );
+  }
+};
 
         wrapper.appendChild(copyBtn);
       }
