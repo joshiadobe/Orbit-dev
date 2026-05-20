@@ -72,6 +72,16 @@ function getOrientation() {
   }
 }
 
+function getISTTime() {
+
+  return new Date().toLocaleString(
+    "sv-SE",
+    {
+      timeZone: "Asia/Kolkata"
+    }
+  ).replace(" ", "T") + "+05:30";
+}
+
 /* ------------------------------------------------ */
 /* TRACK EVENT                                      */
 /* ------------------------------------------------ */
@@ -152,7 +162,7 @@ async function track(
             new Date().getTimezoneOffset(),
 
           localTime:
-            new Date().toISOString()
+            getISTTime()
         },
 
         /* ---------- IMPLEMENTATION ---------- */
