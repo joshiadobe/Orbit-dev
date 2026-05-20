@@ -8,7 +8,7 @@ const EDGE_URL =
 /* DEBUG                                            */
 /* ------------------------------------------------ */
 
-const ANALYTICS_DEBUG = true;
+const ANALYTICS_DEBUG = false;
 
 function analyticsLog(...args) {
 
