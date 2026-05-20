@@ -143,8 +143,6 @@ function scrollToBottom() {
   }, 0);
 }
 
-/* ---------- HELPERS ---------- */
-
 function getTextarea() {
 
   return [...document.querySelectorAll("textarea")]
@@ -401,11 +399,11 @@ function createUI() {
   const AI_ACTIONS = [
     {
       label: "Executive Summary",
-      prompt: "Provide executive summary in markdown. Non techinical summary for leadership in 5 points and summary of case time line in table as well\n\n"
+      prompt: "Provide executive summary for leadership in 5 points.\n\n"
     },
     {
       label: "Find Relevant JIRA",
-      prompt: "Suggest relevant JIRA. Priotise any similar open jira, what thsese jira are similar summarise all that info in table as well also show the status of the JIRAs\n\n"
+      prompt: "Suggest relevant JIRA. Priotise any similar and relavent jira whoes status is open then look for other closed relavent simmilar JIRA,why thsese jira are similar summarise all that info in table as well also show the current status of the JIRAs\n\n"
     },
     {
       label: "Similar Cases",
