@@ -91,6 +91,7 @@ let TAB_ID = null;
 let panel;
 let chatContainer;
 let primaryBtn;
+let authBtn;
 let expanded = false;
 
 /* ---------- TAB ---------- */
@@ -130,6 +131,88 @@ function loadMessages(cb) {
     const entry = data.responses?.[getStorageKey()];
     log("STORAGE", "Loaded", entry);
     cb(entry);
+  });
+}
+
+/* ---------- AUTH ---------- */
+
+function parseJwt(token) {
+  try {
+    return JSON.parse(
+      atob(token.split(".")[1])
+    );
+  } catch (err) {
+    return null;
+  }
+}
+
+function getAuthStatus(cb) {
+  chrome.runtime.sendMessage({ type: "GET_AUTH_STATUS" }, (res) => {
+    cb(res);
+  });
+}
+
+function refreshAuthButton() {
+  if (!authBtn) return;
+
+  chrome.storage.local.get(
+    ["orbit_auth_v1"],
+    (storage) => {
+
+      const auth =
+        storage.orbit_auth_v1;
+
+      if (
+        auth &&
+        auth.accessToken &&
+        auth.idToken
+      ) {
+        const payload =
+          parseJwt(auth.idToken);
+
+        const displayName =
+          payload?.name ||
+          payload?.preferred_username ||
+          payload?.email ||
+          "Signed In";
+
+        authBtn.textContent =
+          displayName;
+
+        authBtn.disabled = true;
+
+        authBtn.title =
+          "Authenticated user";
+
+        return;
+      }
+
+      authBtn.textContent =
+        "Sign In";
+
+      authBtn.disabled = false;
+
+      authBtn.title =
+        "Sign in with Okta";
+    }
+  );
+}
+
+function startSignIn() {
+  addMessage("🔐 Starting sign-in...", "system");
+
+  chrome.runtime.sendMessage({ type: "SIGN_IN" }, (res) => {
+    if (!res || !res.success) {
+      addMessage(
+        "❌ Sign-in failed: " + (res?.error || "Unknown error"),
+        "system"
+      );
+      refreshAuthButton();
+      return;
+    }
+
+    addMessage("✅ Signed in successfully.", "system");
+    refreshAuthButton();
   });
 }
 
@@ -320,6 +403,11 @@ function createUI() {
 
   primaryBtn = document.createElement("button");
 
+  const authButton = document.createElement("button");
+  authButton.textContent = "Sign In";
+  authButton.classList.add("btn-clear");
+  authButton.title = "Sign in with Okta";
+
   const clearBtn = document.createElement("button");
   clearBtn.textContent = "Clear";
   clearBtn.classList.add("btn-clear");
@@ -336,6 +424,7 @@ function createUI() {
 
   actions.append(
     primaryBtn,
+    authButton,
     clearBtn,
     newChatBtn,
     resizeBtn,
@@ -367,6 +456,9 @@ function createUI() {
   panel.append(header, chatContainer, inputBox);
 
   document.body.appendChild(panel);
+
+  authBtn = authButton;
+  refreshAuthButton();
 
   /* ---------- MENU ---------- */
 
@@ -494,6 +586,10 @@ function createUI() {
 
   primaryBtn.onclick = handlePrimaryClick;
 
+  authBtn.onclick = function () {
+    startSignIn();
+  };
+
   clearBtn.onclick = function () {
     Analytics.track("orbit.chat.clear", {
       caseId: getCaseId()
@@ -579,7 +675,7 @@ function addMessage(text, role) {
   }
 
   if (!rendered) {
-    text.split("\n").forEach(line => {
+    (text || "").split("\n").forEach(line => {
       const el = document.createElement("div");
 
       createLinkedText(el, line);
@@ -924,7 +1020,12 @@ function sendToAI(prompt, forceFresh) {
             caseId: getCaseId(),
             error: res?.error || "Unknown"
           });
-          addMessage("❌ Error");
+          addMessage("❌ Error: " + (res?.error || "Unknown error"), "system");
+
+          if (res?.error && String(res.error).includes("SIGN_IN_REQUIRED")) {
+            addMessage("🔐 Please click Sign In and try again.", "system");
+          }
+
           return;
         }
 
@@ -1074,6 +1175,7 @@ function createButton() {
     if (!open) {
       updatePrimaryButton();
       loadSavedChat();
+      refreshAuthButton();
     }
   };
 
