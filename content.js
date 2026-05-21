@@ -87,19 +87,13 @@ function normalizeMarkdownTables(text) {
 
 /* ---------- STATE ---------- */
 
-let TAB_ID = null;
 let panel;
 let chatContainer;
 let primaryBtn;
 let authBtn;
 let expanded = false;
 
-/* ---------- TAB ---------- */
 
-chrome.runtime.sendMessage({ type: "GET_TAB_ID" }, (res) => {
-  TAB_ID = res?.tabId;
-  log("INIT", "TAB_ID:", TAB_ID);
-});
 
 /* ---------- STORAGE ---------- */
 
@@ -108,31 +102,7 @@ function getPageKey() {
   return match ? match[1] : location.href;
 }
 
-function getStorageKey() {
-  const caseId = getCaseId();
 
-  if (caseId) {
-    return "case::" + caseId;
-  }
-
-  return "page::" + getPageKey();
-}
-function saveMessages(messages, responseId) {
-  chrome.storage.local.get(["responses"], (data) => {
-    const responses = data.responses || {};
-    responses[getStorageKey()] = { messages, responseId };
-    chrome.storage.local.set({ responses });
-    log("STORAGE", "Saved", responses[getStorageKey()]);
-  });
-}
-
-function loadMessages(cb) {
-  chrome.storage.local.get(["responses"], (data) => {
-    const entry = data.responses?.[getStorageKey()];
-    log("STORAGE", "Loaded", entry);
-    cb(entry);
-  });
-}
 
 /* ---------- AUTH ---------- */
 
@@ -584,65 +554,115 @@ function createUI() {
 
   /* ---------- BUTTON EVENTS ---------- */
 
-  primaryBtn.onclick = handlePrimaryClick;
+  primaryBtn.onclick =
+    handlePrimaryClick;
 
-  authBtn.onclick = function () {
-    startSignIn();
-  };
+  authBtn.onclick =
+    function () {
 
-  clearBtn.onclick = function () {
-    Analytics.track("orbit.chat.clear", {
-      caseId: getCaseId()
-    });
-    chatContainer.innerHTML = "";
+      startSignIn();
+    };
 
-    loadMessages(entry => {
-      saveMessages([], entry?.responseId || null);
-    });
-  };
+  clearBtn.onclick =
+    function () {
 
-  newChatBtn.onclick = function () {
-    Analytics.track("orbit.chat.new", {
-      caseId: getCaseId()
-    });
-    chatContainer.innerHTML = "";
-    saveMessages([], null);
-  };
+      Analytics.track(
+        "orbit.chat.clear",
+        {
+          caseId: getCaseId()
+        }
+      );
 
-  resizeBtn.onclick = function () {
-    Analytics.track("orbit.panel.resize", {
-      caseId: getCaseId(),
-      expanded: !expanded
-    });
-    expanded = !expanded;
+      while (
+        chatContainer.firstChild
+      ) {
+        chatContainer.removeChild(
+          chatContainer.firstChild
+        );
+      }
+    };
 
-    panel.classList.toggle("expanded");
+  newChatBtn.onclick =
+    function () {
 
-    resizeBtn.textContent = expanded
-      ? "Collapse"
-      : "Expand";
-  };
+      Analytics.track(
+        "orbit.chat.new",
+        {
+          caseId: getCaseId()
+        }
+      );
 
-  sendBtn.onclick = function () {
-    handleSend(input);
-  };
+      while (
+        chatContainer.firstChild
+      ) {
+        chatContainer.removeChild(
+          chatContainer.firstChild
+        );
+      }
+    };
 
-  input.addEventListener("input", () => {
-    input.style.height = "auto";
+  resizeBtn.onclick =
+    function () {
 
-    input.style.height =
-      Math.min(input.scrollHeight, 160) + "px";
-  });
+      Analytics.track(
+        "orbit.panel.resize",
+        {
+          caseId: getCaseId(),
+          expanded: !expanded
+        }
+      );
 
-  input.addEventListener("keydown", function (e) {
+      expanded = !expanded;
 
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
+      panel.classList.toggle(
+        "expanded"
+      );
+
+      resizeBtn.textContent =
+        expanded
+          ? "Collapse"
+          : "Expand";
+    };
+
+  sendBtn.onclick =
+    function () {
 
       handleSend(input);
-    }
+    };
 
-  });
+  input.addEventListener(
+    "keydown",
+    function (e) {
+
+      /* ---------- ENTER = SEND ---------- */
+
+      if (
+        e.key === "Enter" &&
+        !e.shiftKey
+      ) {
+
+        e.preventDefault();
+
+        handleSend(input);
+
+        return;
+      }
+
+      /* ---------- SHIFT + ENTER ---------- */
+
+      if (
+        e.key === "Enter" &&
+        e.shiftKey
+      ) {
+
+        return;
+      }
+    }
+  );
+
+
+
+
 }
 
 /* ---------- CHAT ---------- */
@@ -810,63 +830,63 @@ function typeMessage(text, role = "ai", speed = 8) {
 
         copyBtn.onclick = async () => {
 
-  window.Analytics?.track(
-    "orbit.copy.clicked",
-    {
-      caseId: getCaseId()
-    }
-  );
+          window.Analytics?.track(
+            "orbit.copy.clicked",
+            {
+              caseId: getCaseId()
+            }
+          );
 
-  try {
+          try {
 
-    const clone =
-      content.cloneNode(true);
+            const clone =
+              content.cloneNode(true);
 
-    clone.querySelectorAll("table")
-      .forEach(table => {
+            clone.querySelectorAll("table")
+              .forEach(table => {
 
-        table.style.borderCollapse =
-          "collapse";
+                table.style.borderCollapse =
+                  "collapse";
 
-        table.style.width = "100%";
+                table.style.width = "100%";
 
-        table.style.fontFamily =
-          "Arial, sans-serif";
+                table.style.fontFamily =
+                  "Arial, sans-serif";
 
-        table.style.fontSize =
-          "13px";
-      });
+                table.style.fontSize =
+                  "13px";
+              });
 
-    clone.querySelectorAll("th, td")
-      .forEach(cell => {
+            clone.querySelectorAll("th, td")
+              .forEach(cell => {
 
-        cell.style.border =
-          "1px solid #ccc";
+                cell.style.border =
+                  "1px solid #ccc";
 
-        cell.style.padding =
-          "6px";
+                cell.style.padding =
+                  "6px";
 
-        cell.style.textAlign =
-          "left";
-      });
+                cell.style.textAlign =
+                  "left";
+              });
 
-    clone.querySelectorAll("th")
-      .forEach(th => {
+            clone.querySelectorAll("th")
+              .forEach(th => {
 
-        th.style.background =
-          "#f5f5f5";
+                th.style.background =
+                  "#f5f5f5";
 
-        th.style.fontWeight =
-          "bold";
-      });
+                th.style.fontWeight =
+                  "bold";
+              });
 
-    clone.querySelectorAll("p")
-      .forEach(p => {
+            clone.querySelectorAll("p")
+              .forEach(p => {
 
-        p.style.margin = "6px 0";
-      });
+                p.style.margin = "6px 0";
+              });
 
-    const htmlContent = `
+            const htmlContent = `
       <div style="
         font-family: Arial, sans-serif;
         font-size: 13px;
@@ -876,48 +896,48 @@ function typeMessage(text, role = "ai", speed = 8) {
       </div>
     `;
 
-    const plainText =
-      clone.innerText;
+            const plainText =
+              clone.innerText;
 
-    await navigator.clipboard.write([
-      new ClipboardItem({
+            await navigator.clipboard.write([
+              new ClipboardItem({
 
-        "text/html":
-          new Blob(
-            [htmlContent],
-            {
-              type: "text/html"
-            }
-          ),
+                "text/html":
+                  new Blob(
+                    [htmlContent],
+                    {
+                      type: "text/html"
+                    }
+                  ),
 
-        "text/plain":
-          new Blob(
-            [plainText],
-            {
-              type: "text/plain"
-            }
-          )
-      })
-    ]);
+                "text/plain":
+                  new Blob(
+                    [plainText],
+                    {
+                      type: "text/plain"
+                    }
+                  )
+              })
+            ]);
 
-    copyBtn.textContent =
-      "Copied!";
+            copyBtn.textContent =
+              "Copied!";
 
-    setTimeout(() => {
+            setTimeout(() => {
 
-      copyBtn.textContent =
-        "Copy";
+              copyBtn.textContent =
+                "Copy";
 
-    }, 1500);
+            }, 1500);
 
-  } catch (err) {
+          } catch (err) {
 
-    console.error(
-      "Copy failed",
-      err
-    );
-  }
-};
+            console.error(
+              "Copy failed",
+              err
+            );
+          }
+        };
 
         wrapper.appendChild(copyBtn);
       }
@@ -947,146 +967,250 @@ function handleSend(input) {
 
 /* ---------- AI ---------- */
 
-function sendToAI(prompt, forceFresh) {
-  const loading = document.createElement("div");
+function sendToAI(
+  prompt,
+  forceFresh
+) {
 
-  loading.className = "ai-msg processing-msg";
+  const loading =
+    document.createElement("div");
+
+  loading.className =
+    "ai-msg processing-msg";
 
   const baseMessage =
     getRandomProcessingMessage();
 
   let dots = 0;
 
-  loading.textContent = baseMessage;
+  loading.textContent =
+    baseMessage;
 
-  const dotsInterval = setInterval(() => {
-    dots = (dots + 1) % 4;
+  const dotsInterval =
+    setInterval(() => {
 
-    loading.textContent =
-      baseMessage + ".".repeat(dots);
+      dots = (dots + 1) % 4;
 
-  }, 500);
+      loading.textContent =
+        baseMessage +
+        ".".repeat(dots);
 
-  chatContainer.appendChild(loading);
+    }, 500);
+
+  chatContainer.appendChild(
+    loading
+  );
 
   scrollToBottom();
 
-  loadMessages(entry => {
-    const messages = entry?.messages || [];
+  let fresh;
 
-    const previousResponseId =
-      entry?.responseId || null;
+  if (forceFresh === true) {
 
-    let fresh;
+    fresh = true;
 
-    if (forceFresh === true) {
-      fresh = true;
-      log("CTX", "Forced fresh");
-    } else if (previousResponseId) {
-      fresh = false;
-      log("CTX", "Thread");
-    } else if (messages.length > 0) {
-      fresh = false;
-      log("CTX", "History fallback");
-    } else {
-      fresh = true;
-      log("CTX", "Fresh");
+    log(
+      "CTX",
+      "Forced fresh"
+    );
+
+  } else {
+
+    fresh = false;
+
+    log(
+      "CTX",
+      "Backend continuity"
+    );
+  }
+
+  const requestStartTime =
+    performance.now();
+
+  Analytics.track(
+    "orbit.ai.request",
+    {
+      caseId:
+        getCaseId(),
+
+      promptLength:
+        prompt.length,
+
+      freshContext:
+        fresh
     }
+  );
 
-    const requestStartTime = performance.now();
+  chrome.runtime.sendMessage(
+    {
+      type: "AI_CALL",
 
-    Analytics.track("orbit.ai.request", {
-      caseId: getCaseId(),
-      promptLength: prompt.length,
-      freshContext: fresh
-    });
+      prompt,
 
-    chrome.runtime.sendMessage(
-      {
-        type: "AI_CALL",
-        prompt,
-        fresh,
-        previousResponseId,
-        history: messages
-      },
-      res => {
-        clearInterval(dotsInterval);
-        loading.remove();
+      caseId:
+        getCaseId(),
 
-        scrollToBottom();
+      fresh
+    },
 
-        if (!res || !res.success) {
-          Analytics.track("orbit.ai.error", {
-            caseId: getCaseId(),
-            error: res?.error || "Unknown"
-          });
-          addMessage("❌ Error: " + (res?.error || "Unknown error"), "system");
+    res => {
 
-          if (res?.error && String(res.error).includes("SIGN_IN_REQUIRED")) {
-            addMessage("🔐 Please click Sign In and try again.", "system");
+      clearInterval(
+        dotsInterval
+      );
+
+      loading.remove();
+
+      scrollToBottom();
+
+      if (
+        !res ||
+        !res.success
+      ) {
+
+        Analytics.track(
+          "orbit.ai.error",
+          {
+            caseId:
+              getCaseId(),
+
+            error:
+              res?.error ||
+              "Unknown"
           }
-
-          return;
-        }
-
-        const aiText = res.data.text;
-        const duration =
-          Math.round(performance.now() - requestStartTime);
-
-        Analytics.track("orbit.ai.response", {
-          caseId: getCaseId(),
-          responseLength: aiText.length,
-          duration,
-          success: true,
-          contextMode: res.data.contextMode
-        });
-        log("AI", aiText);
-
-        typeMessage(aiText, "ai");
+        );
 
         addMessage(
-          "⚙️ Context Mode: " +
-          res.data.contextMode,
+          "❌ Error: " +
+          (
+            res?.error ||
+            "Unknown error"
+          ),
           "system"
         );
 
-        const updated = messages.concat([
-          {
-            role: "user",
-            content: prompt
-          },
-          {
-            role: "assistant",
-            content: aiText
-          }
-        ]);
+        if (
+          res?.error &&
+          String(res.error)
+            .includes(
+              "SIGN_IN_REQUIRED"
+            )
+        ) {
 
-        saveMessages(
-          updated,
-          res.data.responseId
-        );
+          addMessage(
+            "🔐 Please click Sign In and try again.",
+            "system"
+          );
+        }
+
+        return;
       }
-    );
-  });
+
+      const aiText =
+        res.data.text;
+
+      const duration =
+        Math.round(
+          performance.now() -
+          requestStartTime
+        );
+
+      Analytics.track(
+        "orbit.ai.response",
+        {
+          caseId:
+            getCaseId(),
+
+          responseLength:
+            aiText.length,
+
+          duration,
+
+          success: true,
+
+          contextMode:
+            res.data.contextMode
+        }
+      );
+
+      log("AI", aiText);
+
+      typeMessage(
+        aiText,
+        "ai"
+      );
+
+      addMessage(
+        "⚙️ Context Mode: " +
+        res.data.contextMode,
+        "system"
+      );
+    }
+  );
 }
 
 /* ---------- LOAD ---------- */
 
 function loadSavedChat() {
-  loadMessages(entry => {
-    chatContainer.innerHTML = "";
 
-    if (entry?.messages) {
-      entry.messages.forEach(m => {
+  const caseId =
+    getCaseId();
+
+  if (!caseId) {
+    return;
+  }
+
+  chrome.runtime.sendMessage(
+    {
+      type:
+        "LOAD_RECENT_MESSAGES",
+
+      caseId
+    },
+
+    (res) => {
+
+      if (
+        !res ||
+        !res.success
+      ) {
+        console.error(
+          "Failed loading messages"
+        );
+
+        return;
+      }
+
+      const messages =
+        res.data.messages || [];
+
+      /* ---------- SAFE CLEAR ---------- */
+
+      while (
+        chatContainer.firstChild
+      ) {
+        chatContainer.removeChild(
+          chatContainer.firstChild
+        );
+      }
+
+      /* ---------- RENDER ---------- */
+
+      messages.forEach(m => {
+
         addMessage(
           m.content,
+
           m.role === "assistant"
             ? "ai"
             : m.role
         );
+
       });
+
+      scrollToBottom();
     }
-  });
+  );
 }
 
 /* ---------- INIT ---------- */

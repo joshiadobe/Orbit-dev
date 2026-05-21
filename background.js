@@ -31,10 +31,24 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     return true;
   }
 
+  if (
+    request.type ===
+    "LOAD_RECENT_MESSAGES"
+  ) {
+    handleLoadRecentMessages(
+      request,
+      sendResponse
+    );
+
+    return true;
+  }
+
   if (request.type === "AI_CALL") {
     handleAICallRequest(request, sendResponse);
     return true;
   }
+
+  
 });
 
 function sendTabIdResponse(sender, sendResponse) {
@@ -423,6 +437,7 @@ async function handleAICallRequest(
   sendResponse
 ) {
   try {
+
     const userToken =
       await getValidUserAccessToken(
         true
@@ -439,19 +454,12 @@ async function handleAICallRequest(
         },
 
         body: JSON.stringify({
+
           prompt:
             request.prompt,
 
-          previousResponseId:
-            request.previousResponseId ||
-            null,
-
-          history:
-            Array.isArray(
-              request.history
-            )
-              ? request.history
-              : [],
+          caseId:
+            request.caseId || "",
 
           fresh:
             Boolean(request.fresh),
@@ -466,6 +474,7 @@ async function handleAICallRequest(
       await response.json();
 
     if (!response.ok) {
+
       sendResponse({
         success: false,
 
@@ -484,6 +493,7 @@ async function handleAICallRequest(
     });
 
   } catch (err) {
+
     sendResponse({
       success: false,
 
@@ -494,3 +504,65 @@ async function handleAICallRequest(
     });
   }
 }
+async function handleLoadRecentMessages(
+    request,
+    sendResponse
+  ) {
+    try {
+
+      const userToken =
+        await getValidUserAccessToken(
+          true
+        );
+
+      const response = await fetch(
+        AUTH_CONFIG.BACKEND_URL +
+        "/conversation/recent",
+        {
+          method: "POST",
+
+          headers: {
+            "Content-Type":
+              "application/json"
+          },
+
+          body: JSON.stringify({
+            caseId:
+              request.caseId,
+
+            userToken
+          })
+        }
+      );
+
+      const data =
+        await response.json();
+
+      if (!response.ok) {
+        sendResponse({
+          success: false,
+
+          error:
+            data.error ||
+            "Failed loading messages"
+        });
+
+        return;
+      }
+
+      sendResponse({
+        success: true,
+        data
+      });
+
+    } catch (err) {
+
+      sendResponse({
+        success: false,
+
+        error:
+          err?.message ||
+          "Unknown error"
+      });
+    }
+  }

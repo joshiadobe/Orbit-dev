@@ -6,7 +6,8 @@
   "permissions": ["storage", "identity"],
   "host_permissions": [
     "http://10.42.71.33:3000/*",
-    "https://adobe.okta.com/*"
+    "https://adobe.okta.com/*",
+    "https://adobe-stage.okta.com/*"
   ],
 
   "background": {
