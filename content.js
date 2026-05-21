@@ -93,6 +93,78 @@ let primaryBtn;
 let authBtn;
 let expanded = false;
 
+const LOCAL_CACHE_KEY =
+  "orbit_recent_cache_v1";
+
+function getConversationCacheKey() {
+
+  const caseId =
+    getCaseId();
+
+  return caseId
+    ? "case::" + caseId
+    : "unknown";
+}
+
+function loadRecentCache() {
+
+  return new Promise(resolve => {
+
+    chrome.storage.local.get(
+      [LOCAL_CACHE_KEY],
+
+      data => {
+
+        const cache =
+          data[
+            LOCAL_CACHE_KEY
+          ] || {};
+
+        resolve(
+          cache[
+            getConversationCacheKey()
+          ] || null
+        );
+      }
+    );
+  });
+}
+
+function saveRecentCache(
+  payload
+) {
+
+  chrome.storage.local.get(
+    [LOCAL_CACHE_KEY],
+
+    data => {
+
+      const cache =
+        data[
+          LOCAL_CACHE_KEY
+        ] || {};
+
+      cache[
+        getConversationCacheKey()
+      ] = {
+        messages:
+          payload.messages || [],
+
+        latestResponseId:
+          payload.latestResponseId || null,
+
+        lastSyncedAt:
+          Date.now()
+      };
+
+      chrome.storage.local.set({
+        [LOCAL_CACHE_KEY]:
+          cache
+      });
+    }
+  );
+}
+
 
 
 /* ---------- STORAGE ---------- */
@@ -1151,7 +1223,7 @@ function sendToAI(
 
 /* ---------- LOAD ---------- */
 
-function loadSavedChat() {
+async function loadSavedChat() {
 
   const caseId =
     getCaseId();
@@ -1159,6 +1231,52 @@ function loadSavedChat() {
   if (!caseId) {
     return;
   }
+
+  /* -------------------------------- */
+  /* STEP 1: INSTANT CACHE RENDER    */
+  /* -------------------------------- */
+
+  const cached =
+    await loadRecentCache();
+
+  if (
+    cached &&
+    Array.isArray(
+      cached.messages
+    )
+  ) {
+
+    while (
+      chatContainer.firstChild
+    ) {
+      chatContainer.removeChild(
+        chatContainer.firstChild
+      );
+    }
+
+    cached.messages.forEach(m => {
+
+      addMessage(
+        m.content,
+
+        m.role === "assistant"
+          ? "ai"
+          : m.role
+      );
+
+    });
+
+    scrollToBottom();
+
+    log(
+      "CACHE",
+      "Rendered local cache"
+    );
+  }
+
+  /* -------------------------------- */
+  /* STEP 2: BACKGROUND REVALIDATE   */
+  /* -------------------------------- */
 
   chrome.runtime.sendMessage(
     {
@@ -1174,6 +1292,7 @@ function loadSavedChat() {
         !res ||
         !res.success
       ) {
+
         console.error(
           "Failed loading messages"
         );
@@ -1184,7 +1303,17 @@ function loadSavedChat() {
       const messages =
         res.data.messages || [];
 
-      /* ---------- SAFE CLEAR ---------- */
+      /* ---------- SAVE CACHE ---------- */
+
+      saveRecentCache({
+        messages,
+
+        latestResponseId:
+          res.data
+            .latestResponseId
+      });
+
+      /* ---------- RE-RENDER ---------- */
 
       while (
         chatContainer.firstChild
@@ -1193,8 +1322,6 @@ function loadSavedChat() {
           chatContainer.firstChild
         );
       }
-
-      /* ---------- RENDER ---------- */
 
       messages.forEach(m => {
 
@@ -1209,6 +1336,11 @@ function loadSavedChat() {
       });
 
       scrollToBottom();
+
+      log(
+        "CACHE",
+        "Background sync complete"
+      );
     }
   );
 }
