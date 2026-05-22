@@ -332,7 +332,7 @@ function getPrimaryAction() {
     return {
       label: "Summarise",
       prompt:
-        "Summarize the case timeline using clean markdown formatting. Use headings, bullet points, and valid markdown tables. Do not insert blank lines inside tables.\n\n"
+        "Summarize the complete ticket in easy to understand way, in pointers. Maximum info All in 250 words\n\n"
     };
   }
 
@@ -349,28 +349,65 @@ function updatePrimaryButton() {
 }
 
 function handlePrimaryClick() {
-  const action = getPrimaryAction();
 
+  const action =
+    getPrimaryAction();
 
-  const text = getRelevantText();
-
+  const text =
+    getRelevantText();
 
   if (!text) {
-    addMessage("⚠️ No case content found.", "system");
+
+    addMessage(
+      "⚠️ No case content found.",
+      "system"
+    );
+
     return;
   }
 
-  const prompt = buildFinalPrompt(action.prompt, text);
+  const prompt =
+    action.label ===
+    "Draft First Response"
 
-  addMessage("⚡ " + action.label, "system");
+      ? buildFinalPrompt(
+          action.prompt,
+          text
+        )
 
-  Analytics.track("orbit.primary.clicked", {
-    caseId: getCaseId(),
-    buttonName: action.label,
-    promptType: "primary"
-  });
+      : buildFinalPrompt(
+          action.prompt,
+          ""
+        );
 
-  sendToAI(prompt, true);
+  addMessage(
+    "⚡ " + action.label,
+    "system"
+  );
+
+  Analytics.track(
+    "orbit.primary.clicked",
+    {
+      caseId: getCaseId(),
+
+      buttonName:
+        action.label,
+
+      promptType:
+        "primary"
+    }
+  );
+
+  /* ---------- ONLY FIRST RESPONSE IS FRESH ---------- */
+
+  const forceFresh =
+    action.label ===
+    "Draft First Response";
+
+  sendToAI(
+    prompt,
+    forceFresh
+  );
 }
 
 /* ---------- LINKIFY FALLBACK ---------- */
@@ -545,7 +582,7 @@ function createUI() {
     },
     {
       label: "Next Steps",
-      prompt: "Provide next steps to investigate the case. from the payload that you have got for this case from dynamics in that object there would be an key with the name  activities from this key's value array show me the last object only out of the complete payload and its heading should be 'Disclamer! Latest response from Dynamic' and and provide the exact adobe-ent.crm.dynamics.com link in source\n\n"
+      prompt: "Provide next steps to investigate the case. from the payload that you have got for this case from dynamics in that object there would be an key with the name  activities from this key's value array show me the last object only out of the complete payload and its heading should be 'Disclamer! Latest response from Dynamic sent me'\n\n"
     },
     {
       label: "Close Escalation",
@@ -553,7 +590,7 @@ function createUI() {
     },
     {
       label: "FTS Notes",
-      prompt: "perpare FTS notes in less than 100 words so it can be shared with next geo engineer who will work on this case \n\n"
+      prompt: "perpare FTS notes in less than 100 words so it can be shared with next geo engineer who will work on this case, It should have Client's Org name, CaseID, Issue, Next Steps \n\n"
     },
     {
       label: "Case Closure",
