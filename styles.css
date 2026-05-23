@@ -398,20 +398,23 @@
 
 .ai-msg pre {
   margin: 10px 0;
-
   padding: 12px;
-
   overflow-x: auto;
-
+  max-width: 100%;
   background: #111;
-
   border-radius: var(--ai-radius-md);
+  white-space: pre-wrap;
+  word-break: normal;
+  overflow-wrap: break-word;
 }
 
 .ai-msg pre code {
   background: transparent;
   border: none;
   padding: 0;
+  white-space: pre-wrap;
+  word-break: normal;
+  overflow-wrap: break-word;
 }
 
 /* =========================================================
