@@ -6,55 +6,113 @@ import {
   parseOAuthCallback
 } from "./pkce.js";
 
-chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-  if (!request || !request.type) {
-    return;
+/* =========================================================
+   SAFE FETCH WITH TIMEOUT
+========================================================= */
+
+async function fetchWithTimeout(
+  url,
+  options = {},
+  timeout = 20000
+) {
+  const controller = new AbortController();
+
+  const timeoutId = setTimeout(() => {
+    controller.abort();
+  }, timeout);
+
+  try {
+
+    const response = await fetch(url, {
+      ...options,
+      signal: controller.signal
+    });
+
+    clearTimeout(timeoutId);
+
+    return response;
+
+  } catch (err) {
+
+    clearTimeout(timeoutId);
+
+    if (err.name === "AbortError") {
+      throw new Error("Request timeout");
+    }
+
+    throw err;
   }
+}
 
-  if (request.type === "GET_TAB_ID") {
-    sendTabIdResponse(sender, sendResponse);
-    return;
+/* =========================================================
+   MESSAGE LISTENER
+========================================================= */
+
+chrome.runtime.onMessage.addListener(
+  (request, sender, sendResponse) => {
+
+    if (!request || !request.type) {
+      return;
+    }
+
+    if (request.type === "GET_TAB_ID") {
+      sendTabIdResponse(sender, sendResponse);
+      return;
+    }
+
+    if (request.type === "GET_AUTH_STATUS") {
+      handleGetAuthStatus(sendResponse);
+      return true;
+    }
+
+    if (request.type === "SIGN_IN") {
+      handleSignInRequest(sendResponse);
+      return true;
+    }
+
+    if (request.type === "SIGN_OUT") {
+      handleSignOutRequest(sendResponse);
+      return true;
+    }
+
+    if (
+      request.type ===
+      "LOAD_RECENT_MESSAGES"
+    ) {
+      handleLoadRecentMessages(
+        request,
+        sendResponse
+      );
+
+      return true;
+    }
+
+    if (request.type === "AI_CALL") {
+      handleAICallRequest(
+        request,
+        sendResponse
+      );
+
+      return true;
+    }
   }
+);
 
-  if (request.type === "GET_AUTH_STATUS") {
-    handleGetAuthStatus(sendResponse);
-    return true;
-  }
+/* =========================================================
+   HELPERS
+========================================================= */
 
-  if (request.type === "SIGN_IN") {
-    handleSignInRequest(sendResponse);
-    return true;
-  }
-
-  if (request.type === "SIGN_OUT") {
-    handleSignOutRequest(sendResponse);
-    return true;
-  }
-
-  if (
-    request.type ===
-    "LOAD_RECENT_MESSAGES"
-  ) {
-    handleLoadRecentMessages(
-      request,
-      sendResponse
-    );
-
-    return true;
-  }
-
-  if (request.type === "AI_CALL") {
-    handleAICallRequest(request, sendResponse);
-    return true;
-  }
-
-  
-});
-
-function sendTabIdResponse(sender, sendResponse) {
+function sendTabIdResponse(
+  sender,
+  sendResponse
+) {
   let tabId = null;
 
-  if (sender && sender.tab && typeof sender.tab.id === "number") {
+  if (
+    sender &&
+    sender.tab &&
+    typeof sender.tab.id === "number"
+  ) {
     tabId = sender.tab.id;
   }
 
@@ -84,8 +142,13 @@ function getAuthStateKey() {
 }
 
 async function loadAuthState() {
-  const data = await storageGet([getAuthStateKey()]);
-  return data[getAuthStateKey()] || null;
+  const data = await storageGet([
+    getAuthStateKey()
+  ]);
+
+  return (
+    data[getAuthStateKey()] || null
+  );
 }
 
 async function saveAuthState(state) {
@@ -95,15 +158,24 @@ async function saveAuthState(state) {
 }
 
 async function clearAuthState() {
-  await storageRemove([getAuthStateKey()]);
+  await storageRemove([
+    getAuthStateKey()
+  ]);
 }
 
 function isTokenValid(state) {
-  if (!state || !state.accessToken || !state.expiresAt) {
+  if (
+    !state ||
+    !state.accessToken ||
+    !state.expiresAt
+  ) {
     return false;
   }
 
-  return Date.now() < state.expiresAt - 60 * 1000;
+  return (
+    Date.now() <
+    state.expiresAt - 60 * 1000
+  );
 }
 
 function randomState() {
@@ -112,39 +184,51 @@ function randomState() {
   crypto.getRandomValues(bytes);
 
   return Array.from(bytes)
-    .map((b) => b.toString(16).padStart(2, "0"))
+    .map((b) =>
+      b.toString(16).padStart(2, "0")
+    )
     .join("");
 }
 
+/* =========================================================
+   LOGIN
+========================================================= */
+
 async function loginWithPkce() {
-  const redirectUri = chrome.identity.getRedirectURL();
+
+  const redirectUri =
+    chrome.identity.getRedirectURL();
 
   const state = randomState();
 
-  const codeVerifier = generateCodeVerifier();
+  const codeVerifier =
+    generateCodeVerifier();
 
   const codeChallenge =
-    await generateCodeChallenge(codeVerifier);
+    await generateCodeChallenge(
+      codeVerifier
+    );
 
-  const authorizeUrl = buildAuthorizeUrl({
-    authorizeUrl:
-      AUTH_CONFIG.OKTA_AUTHORIZE_URL,
+  const authorizeUrl =
+    buildAuthorizeUrl({
+      authorizeUrl:
+        AUTH_CONFIG.OKTA_AUTHORIZE_URL,
 
-    clientId:
-      AUTH_CONFIG.CLIENT_ID,
+      clientId:
+        AUTH_CONFIG.CLIENT_ID,
 
-    redirectUri:
-      redirectUri,
+      redirectUri:
+        redirectUri,
 
-    state:
-      state,
+      state:
+        state,
 
-    codeChallenge:
-      codeChallenge,
+      codeChallenge:
+        codeChallenge,
 
-    scopes:
-      AUTH_CONFIG.SCOPES
-  });
+      scopes:
+        AUTH_CONFIG.SCOPES
+    });
 
   const callbackUrl =
     await chrome.identity.launchWebAuthFlow({
@@ -153,7 +237,9 @@ async function loginWithPkce() {
     });
 
   if (!callbackUrl) {
-    throw new Error("Login was cancelled");
+    throw new Error(
+      "Login was cancelled"
+    );
   }
 
   const callback =
@@ -173,27 +259,36 @@ async function loginWithPkce() {
   }
 
   if (callback.state !== state) {
-    throw new Error("State mismatch");
+    throw new Error(
+      "State mismatch"
+    );
   }
 
-  /* ---------------- BACKEND TOKEN EXCHANGE ---------------- */
-
-  const response = await fetch(
-    AUTH_CONFIG.BACKEND_URL + "/auth/exchange",
-    {
-      method: "POST",
-
-      headers: {
-        "Content-Type": "application/json"
-      },
-
-      body: JSON.stringify({
-        code: callback.code,
-        codeVerifier: codeVerifier,
-        redirectUri: redirectUri
-      })
-    }
+  console.log(
+    "Exchanging auth token..."
   );
+
+  const response =
+    await fetchWithTimeout(
+      AUTH_CONFIG.BACKEND_URL +
+        "/auth/exchange",
+      {
+        method: "POST",
+
+        headers: {
+          "Content-Type":
+            "application/json"
+        },
+
+        body: JSON.stringify({
+          code: callback.code,
+          codeVerifier:
+            codeVerifier,
+          redirectUri:
+            redirectUri
+        })
+      }
+    );
 
   const tokenData =
     await response.json();
@@ -205,21 +300,26 @@ async function loginWithPkce() {
     );
   }
 
-  const expiresIn =
-    Number(tokenData.expires_in || 3600);
+  const expiresIn = Number(
+    tokenData.expires_in || 3600
+  );
 
   const authState = {
     accessToken:
-      tokenData.access_token || null,
+      tokenData.access_token ||
+      null,
 
     refreshToken:
-      tokenData.refresh_token || null,
+      tokenData.refresh_token ||
+      null,
 
     idToken:
-      tokenData.id_token || null,
+      tokenData.id_token ||
+      null,
 
     tokenType:
-      tokenData.token_type || "Bearer",
+      tokenData.token_type ||
+      "Bearer",
 
     scope:
       tokenData.scope ||
@@ -227,12 +327,16 @@ async function loginWithPkce() {
 
     expiresAt:
       Date.now() +
-      Math.max(expiresIn - 60, 60) * 1000
+      Math.max(
+        expiresIn - 60,
+        60
+      ) *
+        1000
   };
 
   if (!authState.accessToken) {
     throw new Error(
-      "Access token missing from token response"
+      "Access token missing"
     );
   }
 
@@ -241,19 +345,20 @@ async function loginWithPkce() {
   return authState;
 }
 
+/* =========================================================
+   TOKEN
+========================================================= */
+
 async function getValidUserAccessToken(
   interactive
 ) {
+
   const state =
     await loadAuthState();
-
-  /* ---------- VALID TOKEN ---------- */
 
   if (isTokenValid(state)) {
     return state.accessToken;
   }
-
-  /* ---------- REFRESH FLOW ---------- */
 
   if (
     state &&
@@ -261,8 +366,12 @@ async function getValidUserAccessToken(
   ) {
     try {
 
+      console.log(
+        "Refreshing token..."
+      );
+
       const response =
-        await fetch(
+        await fetchWithTimeout(
           AUTH_CONFIG.BACKEND_URL +
             "/auth/refresh",
           {
@@ -286,7 +395,7 @@ async function getValidUserAccessToken(
       if (!response.ok) {
         throw new Error(
           data.error ||
-            "Refresh failed"
+          "Refresh failed"
         );
       }
 
@@ -336,7 +445,7 @@ async function getValidUserAccessToken(
 
     } catch (err) {
 
-      console.warn(
+      console.error(
         "Refresh failed:",
         err
       );
@@ -344,8 +453,6 @@ async function getValidUserAccessToken(
       await clearAuthState();
     }
   }
-
-  /* ---------- FORCE LOGIN ---------- */
 
   if (!interactive) {
     throw new Error(
@@ -359,10 +466,15 @@ async function getValidUserAccessToken(
   return loggedIn.accessToken;
 }
 
+/* =========================================================
+   AUTH HANDLERS
+========================================================= */
+
 async function handleGetAuthStatus(
   sendResponse
 ) {
   try {
+
     const state =
       await loadAuthState();
 
@@ -370,19 +482,23 @@ async function handleGetAuthStatus(
       success: true,
 
       signedIn:
-        Boolean(isTokenValid(state)),
+        Boolean(
+          isTokenValid(state)
+        ),
 
       expiresAt:
-        state?.expiresAt || null
+        state?.expiresAt ||
+        null
     });
+
   } catch (err) {
+
     sendResponse({
       success: false,
 
       error:
-        err && err.message
-          ? err.message
-          : "Failed to read auth state"
+        err?.message ||
+        "Failed to read auth state"
     });
   }
 }
@@ -391,6 +507,7 @@ async function handleSignInRequest(
   sendResponse
 ) {
   try {
+
     await getValidUserAccessToken(
       true
     );
@@ -399,14 +516,15 @@ async function handleSignInRequest(
       success: true,
       signedIn: true
     });
+
   } catch (err) {
+
     sendResponse({
       success: false,
 
       error:
-        err && err.message
-          ? err.message
-          : "Sign in failed"
+        err?.message ||
+        "Sign in failed"
     });
   }
 }
@@ -415,22 +533,28 @@ async function handleSignOutRequest(
   sendResponse
 ) {
   try {
+
     await clearAuthState();
 
     sendResponse({
       success: true
     });
+
   } catch (err) {
+
     sendResponse({
       success: false,
 
       error:
-        err && err.message
-          ? err.message
-          : "Sign out failed"
+        err?.message ||
+        "Sign out failed"
     });
   }
 }
+
+/* =========================================================
+   AI CALL
+========================================================= */
 
 async function handleAICallRequest(
   request,
@@ -438,36 +562,58 @@ async function handleAICallRequest(
 ) {
   try {
 
+    if (!navigator.onLine) {
+      sendResponse({
+        success: false,
+        error:
+          "No internet connection"
+      });
+
+      return;
+    }
+
+    console.log(
+      "Sending AI request..."
+    );
+
     const userToken =
       await getValidUserAccessToken(
         true
       );
 
-    const response = await fetch(
-      AUTH_CONFIG.BACKEND_URL + "/chat",
-      {
-        method: "POST",
+    const response =
+      await fetchWithTimeout(
+        AUTH_CONFIG.BACKEND_URL +
+          "/chat",
+        {
+          method: "POST",
 
-        headers: {
-          "Content-Type":
-            "application/json"
-        },
+          headers: {
+            "Content-Type":
+              "application/json"
+          },
 
-        body: JSON.stringify({
+          body: JSON.stringify({
+            prompt:
+              request.prompt,
 
-          prompt:
-            request.prompt,
+            caseId:
+              request.caseId ||
+              "",
 
-          caseId:
-            request.caseId || "",
+            fresh:
+              Boolean(
+                request.fresh
+              ),
 
-          fresh:
-            Boolean(request.fresh),
+            userToken:
+              userToken
+          })
+        }
+      );
 
-          userToken:
-            userToken
-        })
-      }
+    console.log(
+      "AI response received"
     );
 
     const data =
@@ -479,9 +625,8 @@ async function handleAICallRequest(
         success: false,
 
         error:
-          data && data.error
-            ? data.error
-            : "Backend request failed"
+          data?.error ||
+          "Backend request failed"
       });
 
       return;
@@ -494,30 +639,44 @@ async function handleAICallRequest(
 
   } catch (err) {
 
+    console.error(
+      "AI CALL FAILED:",
+      err
+    );
+
     sendResponse({
       success: false,
 
       error:
-        err && err.message
-          ? err.message
-          : "Unknown background error"
+        err?.message ||
+        "Unknown background error"
     });
   }
 }
+
+/* =========================================================
+   RECENT MESSAGES
+========================================================= */
+
 async function handleLoadRecentMessages(
-    request,
-    sendResponse
-  ) {
-    try {
+  request,
+  sendResponse
+) {
+  try {
 
-      const userToken =
-        await getValidUserAccessToken(
-          true
-        );
+    const userToken =
+      await getValidUserAccessToken(
+        true
+      );
 
-      const response = await fetch(
+    console.log(
+      "Loading recent messages..."
+    );
+
+    const response =
+      await fetchWithTimeout(
         AUTH_CONFIG.BACKEND_URL +
-        "/conversation/recent",
+          "/conversation/recent",
         {
           method: "POST",
 
@@ -535,34 +694,40 @@ async function handleLoadRecentMessages(
         }
       );
 
-      const data =
-        await response.json();
+    const data =
+      await response.json();
 
-      if (!response.ok) {
-        sendResponse({
-          success: false,
-
-          error:
-            data.error ||
-            "Failed loading messages"
-        });
-
-        return;
-      }
-
-      sendResponse({
-        success: true,
-        data
-      });
-
-    } catch (err) {
+    if (!response.ok) {
 
       sendResponse({
         success: false,
 
         error:
-          err?.message ||
-          "Unknown error"
+          data.error ||
+          "Failed loading messages"
       });
+
+      return;
     }
+
+    sendResponse({
+      success: true,
+      data
+    });
+
+  } catch (err) {
+
+    console.error(
+      "LOAD RECENT FAILED:",
+      err
+    );
+
+    sendResponse({
+      success: false,
+
+      error:
+        err?.message ||
+        "Unknown error"
+    });
   }
+}

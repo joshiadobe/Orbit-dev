@@ -3,32 +3,41 @@
   "name": "Orbit",
   "version": "8.0",
   "description": "AI assistant for Dynamics tickets",
-  "permissions": ["storage", "identity"],
+
+  "permissions": [
+    "storage",
+    "identity"
+  ],
+
   "host_permissions": [
     "http://10.42.71.33:3000/*",
     "https://adobe.okta.com/*",
     "https://adobe-stage.okta.com/*",
-    "http://orbit.corp.adobe.com/"
+    "http://orbit.corp.adobe.com/*"
   ],
 
   "background": {
     "service_worker": "background.js",
     "type": "module"
   },
+
   "content_scripts": [
     {
       "matches": [
         "https://adobe-ent.crm.dynamics.com/*",
         "https://*.crm.dynamics.com/*"
       ],
+
       "js": [
         "markdown-it.min.js",
         "content.js",
         "analytics.js"
       ],
+
       "css": [
         "styles.css"
       ],
+
       "run_at": "document_idle"
     }
   ]
