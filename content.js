@@ -1,4 +1,4 @@
-const DEBUG = true;
+const DEBUG = false;
 const ENFORCE_NO_BOLD = false;
 
 const PROCESSING_MESSAGES = [
