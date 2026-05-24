@@ -1,4 +1,4 @@
-const DEBUG = false;
+const DEBUG = true;
 const ENFORCE_NO_BOLD = false;
 
 const PROCESSING_MESSAGES = [
@@ -1336,11 +1336,11 @@ function sendToAI(
         "ai"
       );
 
-      addMessage(
-        "⚙️ Context Mode: " +
-          res.data.contextMode,
-        "system"
-      );
+      // addMessage(
+      //   "⚙️ Context Mode: " +
+      //     res.data.contextMode,
+      //   "system"
+      // );
     }
   );
 }
