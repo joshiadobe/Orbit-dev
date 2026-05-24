@@ -241,21 +241,73 @@ function refreshAuthButton() {
 }
 
 function startSignIn() {
-  addMessage("🔐 Starting sign-in...", "system");
 
-  chrome.runtime.sendMessage({ type: "SIGN_IN" }, (res) => {
-    if (!res || !res.success) {
+  addMessage(
+    "🔐 Starting sign-in...",
+    "system"
+  );
+
+  chrome.runtime.sendMessage(
+    { type: "SIGN_IN" },
+
+    (res) => {
+
+      if (
+        !res ||
+        !res.success
+      ) {
+
+        let errorMessage =
+          res?.error ||
+          "Unknown error";
+
+        /* ---------- VPN / NETWORK ---------- */
+
+        const normalized =
+          String(errorMessage)
+            .toLowerCase();
+
+        if (
+          normalized.includes(
+            "failed to fetch"
+          ) ||
+
+          normalized.includes(
+            "network"
+          ) ||
+
+          normalized.includes(
+            "refresh failed"
+          ) ||
+
+          normalized.includes(
+            "token exchange failed"
+          )
+        ) {
+
+          errorMessage =
+            "🔐 Please connect to Adobe VPN and sign in again.";
+        }
+
+        addMessage(
+          "❌ Sign-in failed: " +
+            errorMessage,
+          "system"
+        );
+
+        refreshAuthButton();
+
+        return;
+      }
+
       addMessage(
-        "❌ Sign-in failed: " + (res?.error || "Unknown error"),
+        "✅ Signed in successfully.",
         "system"
       );
-      refreshAuthButton();
-      return;
-    }
 
-    addMessage("✅ Signed in successfully.", "system");
-    refreshAuthButton();
-  });
+      refreshAuthButton();
+    }
+  );
 }
 
 /* ---------- SCROLL ---------- */
@@ -1172,6 +1224,8 @@ function sendToAI(
 
       scrollToBottom();
 
+      /* ---------- ERROR ---------- */
+
       if (
         !res ||
         !res.success
@@ -1189,14 +1243,45 @@ function sendToAI(
           }
         );
 
+        let errorMessage =
+          res?.error ||
+          "Unknown error";
+
+        /* ---------- VPN / NETWORK ---------- */
+
+        const normalized =
+          String(errorMessage)
+            .toLowerCase();
+
+        if (
+          normalized.includes(
+            "failed to fetch"
+          ) ||
+
+          normalized.includes(
+            "network"
+          ) ||
+
+          normalized.includes(
+            "refresh failed"
+          ) ||
+
+          normalized.includes(
+            "token exchange failed"
+          )
+        ) {
+
+          errorMessage =
+            "🔐 Please connect to Adobe VPN and try again.";
+        }
+
         addMessage(
           "❌ Error: " +
-          (
-            res?.error ||
-            "Unknown error"
-          ),
+            errorMessage,
           "system"
         );
+
+        /* ---------- SIGN IN ---------- */
 
         if (
           res?.error &&
@@ -1214,6 +1299,8 @@ function sendToAI(
 
         return;
       }
+
+      /* ---------- SUCCESS ---------- */
 
       const aiText =
         res.data.text;
@@ -1251,7 +1338,7 @@ function sendToAI(
 
       addMessage(
         "⚙️ Context Mode: " +
-        res.data.contextMode,
+          res.data.contextMode,
         "system"
       );
     }
