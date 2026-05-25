@@ -117,12 +117,12 @@ function loadRecentCache() {
 
         const cache =
           data[
-            LOCAL_CACHE_KEY
+          LOCAL_CACHE_KEY
           ] || {};
 
         resolve(
           cache[
-            getConversationCacheKey()
+          getConversationCacheKey()
           ] || null
         );
       }
@@ -141,7 +141,7 @@ function saveRecentCache(
 
       const cache =
         data[
-          LOCAL_CACHE_KEY
+        LOCAL_CACHE_KEY
         ] || {};
 
       cache[
@@ -291,7 +291,7 @@ function startSignIn() {
 
         addMessage(
           "❌ Sign-in failed: " +
-            errorMessage,
+          errorMessage,
           "system"
         );
 
@@ -420,17 +420,17 @@ function handlePrimaryClick() {
 
   const prompt =
     action.label ===
-    "Draft First Response"
+      "Draft First Response"
 
       ? buildFinalPrompt(
-          action.prompt,
-          text
-        )
+        action.prompt,
+        text
+      )
 
       : buildFinalPrompt(
-          action.prompt,
-          ""
-        );
+        action.prompt,
+        ""
+      );
 
   addMessage(
     "⚡ " + action.label,
@@ -1277,7 +1277,7 @@ function sendToAI(
 
         addMessage(
           "❌ Error: " +
-            errorMessage,
+          errorMessage,
           "system"
         );
 
@@ -1535,6 +1535,73 @@ function createButton() {
     const open =
       panel.style.display === "flex";
 
+
+    /* ---------- DYNAMIC PANEL POSITION ---------- */
+
+    const rect =
+      btn.getBoundingClientRect();
+
+    const viewportWidth =
+      window.innerWidth;
+
+    const viewportHeight =
+      window.innerHeight;
+
+    /* ---------- HORIZONTAL ---------- */
+
+    const openLeft =
+      rect.left >
+      viewportWidth / 2;
+
+    if (openLeft) {
+
+      panel.style.right =
+        (
+          viewportWidth -
+          rect.right
+        ) + "px";
+
+      panel.style.left =
+        "auto";
+
+    } else {
+
+      panel.style.left =
+        rect.left + "px";
+
+      panel.style.right =
+        "auto";
+    }
+
+    /* ---------- VERTICAL ---------- */
+
+    const openUp =
+      rect.top >
+      viewportHeight / 2;
+
+    if (openUp) {
+
+      panel.style.bottom =
+        (
+          viewportHeight -
+          rect.top +
+          10
+        ) + "px";
+
+      panel.style.top =
+        "auto";
+
+    } else {
+
+      panel.style.top =
+        (
+          rect.bottom +
+          10
+        ) + "px";
+
+      panel.style.bottom =
+        "auto";
+    }
     panel.style.display = open
       ? "none"
       : "flex";
@@ -1560,13 +1627,112 @@ function createButton() {
   };
 
   document.body.appendChild(btn);
+
+  /* ---------- DRAGGABLE ---------- */
+
+  let isDragging = false;
+
+  let dragOffsetX = 0;
+  let dragOffsetY = 0;
+
+  btn.addEventListener(
+    "mousedown",
+
+    function (e) {
+
+      isDragging = true;
+
+      dragOffsetX =
+        e.clientX -
+        btn.getBoundingClientRect().left;
+
+      dragOffsetY =
+        e.clientY -
+        btn.getBoundingClientRect().top;
+
+      btn.style.transition =
+        "none";
+    }
+  );
+
+  document.addEventListener(
+    "mousemove",
+
+    function (e) {
+
+      if (!isDragging) {
+        return;
+      }
+
+      const left =
+        e.clientX - dragOffsetX;
+
+      const top =
+        e.clientY - dragOffsetY;
+
+      btn.style.left =
+        left + "px";
+
+      btn.style.top =
+        top + "px";
+
+      btn.style.right =
+        "auto";
+
+      btn.style.bottom =
+        "auto";
+    }
+  );
+
+  document.addEventListener(
+    "mouseup",
+
+    function () {
+
+      isDragging = false;
+
+      btn.style.transition =
+        "";
+    }
+  );
 }
 
-if (document.readyState !== "loading") {
-  init();
+function waitForCaseAndBoot() {
+
+  const interval =
+    setInterval(() => {
+
+      const caseId =
+        getCaseId();
+
+      if (!caseId) {
+        return;
+      }
+
+      clearInterval(interval);
+
+      log(
+        "INIT",
+        "Case detected:",
+        caseId
+      );
+
+      init();
+
+    }, 1000);
+}
+
+if (
+  document.readyState !==
+  "loading"
+) {
+
+  waitForCaseAndBoot();
+
 } else {
+
   document.addEventListener(
     "DOMContentLoaded",
-    init
+    waitForCaseAndBoot
   );
 }
