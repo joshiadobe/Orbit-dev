@@ -609,7 +609,8 @@ async function handleAICallRequest(
             userToken:
               userToken
           })
-        }
+        },
+        180000
       );
 
     console.log(

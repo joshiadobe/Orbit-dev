@@ -1,6 +1,37 @@
 const DEBUG = true;
 const ENFORCE_NO_BOLD = false;
 
+const AI_ACTIONS = [
+  {
+    label: "Executive Summary",
+    prompt: "Provide executive summary for leadership in 5 points.\n\n"
+  },
+  {
+    label: "Find Relevant JIRA",
+    prompt: "Suggest relevant JIRA. Priotise any similar and relavent jira whoes status is open then look for other closed relavent simmilar JIRA,why thsese jira are similar summarise all that info in table as well also show the current status of the JIRAs\n\n"
+  },
+  {
+    label: "Similar Cases",
+    prompt: "Find similar dynamic cases with 1 liner explnination why they fit and provide the exact adobe-ent.crm.dynamics.com link for every case and make sure link are clickable.\n\n"
+  },
+  {
+    label: "Next Steps",
+    prompt: "Provide next steps to investigate the case. from the payload that you have got for this case from dynamics in that object there would be an key with the name  activities from this key's value array show me the last object only out of the complete payload and its heading should be 'Disclamer! Latest response from Dynamic sent me'\n\n"
+  },
+  {
+    label: "Close Escalation",
+    prompt: "give me 1 liner each point for this case Issue Summary Customer Impact Root Cause Corrective Action in past tense imperative\n\n"
+  },
+  {
+    label: "FTS Notes",
+    prompt: "perpare FTS notes in less than 100 words so it can be shared with next geo engineer who will work on this case, It should have Client's Org name, CaseID, Issue, Next Steps \n\n"
+  },
+  {
+    label: "Case Closure",
+    prompt: "Skim thorugh the complete ticket and Please provide details about case resolution, this will be customer facing in less then 100 words make a final response that can be shared with client in past tense imparative \n\n"
+  }
+];
+
 const PROCESSING_MESSAGES = [
   "⏳ Please wait while the minions do their work",
   "🛠️ Grabbing extra minions",
@@ -617,37 +648,6 @@ function createUI() {
 
   document.body.appendChild(menu);
 
-  const AI_ACTIONS = [
-    {
-      label: "Executive Summary",
-      prompt: "Provide executive summary for leadership in 5 points.\n\n"
-    },
-    {
-      label: "Find Relevant JIRA",
-      prompt: "Suggest relevant JIRA. Priotise any similar and relavent jira whoes status is open then look for other closed relavent simmilar JIRA,why thsese jira are similar summarise all that info in table as well also show the current status of the JIRAs\n\n"
-    },
-    {
-      label: "Similar Cases",
-      prompt: "Find similar dynamic cases with 1 liner explnination why they fit and provide the exact adobe-ent.crm.dynamics.com link for every case and make sure link are clickable.\n\n"
-    },
-    {
-      label: "Next Steps",
-      prompt: "Provide next steps to investigate the case. from the payload that you have got for this case from dynamics in that object there would be an key with the name  activities from this key's value array show me the last object only out of the complete payload and its heading should be 'Disclamer! Latest response from Dynamic sent me'\n\n"
-    },
-    {
-      label: "Close Escalation",
-      prompt: "give me 1 liner each point for this case Issue Summary Customer Impact Root Cause Corrective Action in past tense imperative\n\n"
-    },
-    {
-      label: "FTS Notes",
-      prompt: "perpare FTS notes in less than 100 words so it can be shared with next geo engineer who will work on this case, It should have Client's Org name, CaseID, Issue, Next Steps \n\n"
-    },
-    {
-      label: "Case Closure",
-      prompt: "Skim thorugh the complete ticket and Please provide details about case resolution, this will be customer facing in less then 100 words make a final response that can be shared with client in past tense imparative \n\n"
-    }
-  ];
-
   menuBtn.onclick = function (e) {
     e.stopPropagation();
 
@@ -1124,6 +1124,18 @@ function typeMessage(text, role = "ai", speed = 8) {
     }
   }, speed);
 }
+/* ---------- PROMPT → LABEL LOOKUP ---------- */
+
+function resolveDisplayLabel(content) {
+  const allActions = [...AI_ACTIONS, getPrimaryAction()];
+  const trimmed = content.trim();
+  const matched = allActions.find(a => {
+    const p = a.prompt.trim();
+    return trimmed === p || trimmed.startsWith(p);
+  });
+  return matched ? matched.label : content;
+}
+
 /* ---------- SEND ---------- */
 
 function handleSend(input) {
@@ -1135,13 +1147,15 @@ function handleSend(input) {
 
   const prompt = buildFinalPrompt("", text);
 
+  const visibleLabel = resolveDisplayLabel(text);
+
   Analytics.track("orbit.followup.sent", {
     caseId: getCaseId(),
     inputLength: text.length
   });
 
   sendToAI(
-  prompt,false,text
+  prompt, false, visibleLabel
 );
 }
 
@@ -1408,15 +1422,10 @@ async function loadSavedChat() {
     }
 
     cached.messages.forEach(m => {
+      const role = m.role === "assistant" ? "ai" : m.role;
+      const content = m.role === "user" ? resolveDisplayLabel(m.content) : m.content;
 
-      addMessage(
-        m.content,
-
-        m.role === "assistant"
-          ? "ai"
-          : m.role
-      );
-
+      addMessage(content, role);
     });
 
     scrollToBottom();
@@ -1477,15 +1486,10 @@ async function loadSavedChat() {
       }
 
       messages.forEach(m => {
+        const role = m.role === "assistant" ? "ai" : m.role;
+        const content = m.role === "user" ? resolveDisplayLabel(m.content) : m.content;
 
-        addMessage(
-          m.content,
-
-          m.role === "assistant"
-            ? "ai"
-            : m.role
-        );
-
+        addMessage(content, role);
       });
 
       scrollToBottom();
