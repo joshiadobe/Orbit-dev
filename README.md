@@ -1,2 +1,122 @@
-# Orbit-dev
-Orbit Development With out Auth VM Edititon Extensio
+# Orbit 🪐
+
+Orbit is an AI-powered Chrome extension for Adobe support engineers. It sits alongside Dynamics 365 CRM cases and gives you one-click AI assistance — first response drafts, summaries, JIRA lookups, escalation notes, and more — without leaving the case.
+
+---
+
+## Getting Started
+
+### Installation
+
+Orbit is a Chrome extension loaded in developer mode. You will receive a ZIP or folder from your team lead.
+
+1. Open Chrome and go to `chrome://extensions`
+2. Enable **Developer mode** (toggle, top-right)
+3. Click **Load unpacked** and select the Orbit folder
+4. The 🪐 button will appear on supported pages
+
+### Supported Pages
+
+Orbit activates automatically on Adobe Dynamics CRM case pages:
+
+- `https://adobe-ent.crm.dynamics.com/*`
+- `https://*.crm.dynamics.com/*`
+
+---
+
+## Signing In
+
+Orbit uses your Adobe Okta account. You only need to sign in once — it auto-renews in the background.
+
+1. Open any Dynamics case
+2. Click the **🪐** floating button to open the panel
+3. Click **Sign In** in the panel header
+4. Complete your Adobe Okta login in the popup that appears
+5. Your name will appear in the Sign In button confirming you are authenticated
+
+> If sign-in fails with a network error, connect to **Adobe VPN** and try again.
+
+---
+
+## Opening and Moving the Panel
+
+- **Click 🪐** to open or close the Orbit panel
+- The panel automatically positions itself so it does not overlap the button or fall off-screen
+- **Drag the 🪐 button** anywhere on the page to reposition it
+
+---
+
+## Primary Actions
+
+When you open a case, the primary button at the top of the panel changes based on the case state:
+
+| Page state | Button label | What it does |
+|---|---|---|
+| Case has timeline activity | **Summarise** | 250-word bullet-point summary of the full ticket |
+| Case description only | **Draft First Response** | Empathetic first response you can send directly to the customer — acknowledges the issue, restates it back to the customer, and asks them to approve the impersonation request |
+
+Click the button and the response appears in the chat.
+
+---
+
+## Menu Actions
+
+Click **⋯** in the panel header to open the action menu. These actions work on the current case and do not need you to type anything.
+
+| Action | What it produces |
+|---|---|
+| **Executive Summary** | 5-point summary formatted for leadership |
+| **Find Relevant JIRA** | Relevant JIRA tickets (open ones first), with status, similarity explanation, and a summary table |
+| **Similar Cases** | Cases similar to this one with a one-liner explanation and clickable Dynamics links |
+| **Next Steps** | Investigation steps plus the latest activity from the Dynamics payload |
+| **Close Escalation** | Issue Summary, Customer Impact, Root Cause, and Corrective Action in past-tense imperative (for escalation closure) |
+| **FTS Notes** | Handoff notes under 100 words: Org name, Case ID, issue, and next steps — ready to share with the next-geo engineer |
+| **Case Closure** | Customer-facing resolution summary under 100 words in past-tense imperative |
+
+---
+
+## Follow-up Chat
+
+After any AI response you can keep the conversation going using the text input at the bottom of the panel.
+
+- Press **Enter** to send
+- Press **Shift + Enter** for a new line in your message
+- Orbit remembers the context of the current case — you do not need to re-explain it
+
+---
+
+## Copying Responses
+
+Every AI response has a **Copy** button. It copies the content as rich HTML (preserving tables, headings, and formatting) so it pastes cleanly into emails or Dynamics notes. Plain text is also copied as a fallback.
+
+---
+
+## Managing the Chat
+
+| Button | Action |
+|---|---|
+| **Clear** | Removes all messages from the panel (does not delete server history) |
+| **New Chat** | Clears the current panel view to start fresh |
+| **Expand / Collapse** | Toggles the panel between compact (360 × 480 px) and wide (700 px × 80 vh) |
+
+### Chat History
+
+Orbit automatically loads your previous conversation for a case when you open it. When you switch to a different case the chat reloads for that case. Each case keeps its own separate history.
+
+---
+
+## Troubleshooting
+
+| Symptom | Fix |
+|---|---|
+| Sign In fails | Connect to Adobe VPN, then try again |
+| AI request fails with a network error | Connect to Adobe VPN |
+| Panel does not appear | Check that you are on a supported Dynamics page (`adobe-ent.crm.dynamics.com`) |
+| "No case content found" warning | Make sure the case description textarea is visible and populated before clicking a primary action |
+| Extension not loading | Go to `chrome://extensions`, find Orbit, and click the refresh icon |
+
+---
+
+## Version
+
+**v8.0** — Production build targeting `http://orbit.corp.adobe.com`

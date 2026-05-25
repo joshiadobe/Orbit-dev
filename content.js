@@ -432,10 +432,7 @@ function handlePrimaryClick() {
         ""
       );
 
-  addMessage(
-    "⚡ " + action.label,
-    "system"
-  );
+  
 
   Analytics.track(
     "orbit.primary.clicked",
@@ -458,7 +455,8 @@ function handlePrimaryClick() {
 
   sendToAI(
     prompt,
-    forceFresh
+    forceFresh,
+  action.label
   );
 }
 
@@ -677,7 +675,7 @@ function createUI() {
         // const prompt = buildFinalPrompt(action.prompt, text);
         const prompt = buildFinalPrompt(action.prompt, "");
 
-        addMessage(action.label, "system");
+        
 
         Analytics.track("orbit.menu.clicked", {
           caseId: getCaseId(),
@@ -685,7 +683,11 @@ function createUI() {
           promptType: "menu_action"
         });
 
-        sendToAI(prompt);
+        sendToAI(
+  prompt,
+  false,
+  action.label
+);
 
         menu.style.display = "none";
       };
@@ -793,6 +795,7 @@ function createUI() {
 
   input.addEventListener(
     "keydown",
+    
     function (e) {
 
       /* ---------- ENTER = SEND ---------- */
@@ -821,7 +824,23 @@ function createUI() {
     }
   );
 
+  /* ---------- AUTO GROW ---------- */
 
+input.addEventListener(
+  "input",
+
+  function () {
+
+    input.style.height =
+      "auto";
+
+    input.style.height =
+      Math.min(
+        input.scrollHeight,
+        160
+      ) + "px";
+  }
+);
 
 
 }
@@ -1116,22 +1135,33 @@ function handleSend(input) {
 
   const prompt = buildFinalPrompt("", text);
 
-  addMessage(text, "user");
-
   Analytics.track("orbit.followup.sent", {
     caseId: getCaseId(),
     inputLength: text.length
   });
 
-  sendToAI(prompt);
+  sendToAI(
+  prompt,false,text
+);
 }
 
 /* ---------- AI ---------- */
 
 function sendToAI(
   prompt,
-  forceFresh
+  forceFresh,
+  visibleLabel
 ) {
+
+  /* ---------- SHOW USER LABEL ---------- */
+
+  if (visibleLabel) {
+
+    addMessage(
+      visibleLabel,
+      "user"
+    );
+  }
 
   const loading =
     document.createElement("div");
@@ -1185,8 +1215,7 @@ function sendToAI(
     );
   }
 
-  const requestStartTime =
-    performance.now();
+  const requestStartTime = performance.now();
 
   Analytics.track(
     "orbit.ai.request",
@@ -1476,7 +1505,7 @@ function init() {
 
   createButton();
 
-  updatePrimaryButton();
+  
 
   /* ---------- PAGE CHANGE DETECTION ---------- */
 
@@ -1509,6 +1538,7 @@ function init() {
           }
         );
       }
+      updatePrimaryButton();
 
     }, 300);
 
