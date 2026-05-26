@@ -439,7 +439,7 @@ function handlePrimaryClick() {
   const text =
     getRelevantText();
 
-  if (!text) {
+  if (action.label === "Draft First Response" && !text) {
 
     addMessage(
       "⚠️ No case content found.",
@@ -1655,7 +1655,10 @@ function createButton() {
 
     if (!open) {
       updatePrimaryButton();
-      loadSavedChat();
+      const isLoading = !!chatContainer.querySelector(".processing-msg");
+      if (!isLoading) {
+        loadSavedChat();
+      }
       refreshAuthButton();
     }
   };

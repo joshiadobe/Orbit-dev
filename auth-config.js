@@ -1,6 +1,6 @@
 export const AUTH_CONFIG = {
   // BACKEND_URL: "http://10.42.71.33:3000",
-  BACKEND_URL: "http://orbit.corp.adobe.com",
+  BACKEND_URL: "https://orbit.corp.adobe.com",
 
   OKTA_AUTHORIZE_URL:
     // "https://adobe-stage.okta.com/oauth2/v1/authorize",
