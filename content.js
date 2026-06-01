@@ -346,9 +346,15 @@ function startSignIn() {
 function scrollToBottom() {
   if (!chatContainer) return;
 
-  setTimeout(() => {
+  const threshold = 120;
+  const nearBottom =
+    chatContainer.scrollHeight - chatContainer.scrollTop - chatContainer.clientHeight < threshold;
+
+  if (!nearBottom) return;
+
+  requestAnimationFrame(() => {
     chatContainer.scrollTop = chatContainer.scrollHeight;
-  }, 0);
+  });
 }
 
 function getTextarea() {
@@ -996,7 +1002,7 @@ function typeMessage(text, role = "ai", speed = 8) {
       content.textContent = current;
     }
 
-    scrollToBottom();
+    if (index % 20 === 0) scrollToBottom();
 
     if (index >= text.length) {
       clearInterval(interval);
@@ -1144,6 +1150,7 @@ function handleSend(input) {
   if (!text) return;
 
   input.value = "";
+  input.style.height = "";
 
   const prompt = buildFinalPrompt("", text);
 
@@ -1508,6 +1515,10 @@ function init() {
   createUI();
 
   createButton();
+
+  setInterval(() => {
+    chrome.runtime.sendMessage({ type: "PING" }).catch(() => {});
+  }, 20000);
 
   
 

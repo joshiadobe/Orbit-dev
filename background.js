@@ -45,6 +45,20 @@ async function fetchWithTimeout(
 }
 
 /* =========================================================
+   KEEP-ALIVE (prevents MV3 service worker termination)
+========================================================= */
+
+chrome.runtime.onInstalled.addListener(() => {
+  chrome.alarms.create("keepAlive", { periodInMinutes: 0.4 });
+});
+
+chrome.alarms.onAlarm.addListener((alarm) => {
+  if (alarm.name === "keepAlive") {
+    chrome.alarms.create("keepAlive", { periodInMinutes: 0.4 });
+  }
+});
+
+/* =========================================================
    MESSAGE LISTENER
 ========================================================= */
 
@@ -52,6 +66,11 @@ chrome.runtime.onMessage.addListener(
   (request, sender, sendResponse) => {
 
     if (!request || !request.type) {
+      return;
+    }
+
+    if (request.type === "PING") {
+      sendResponse({ pong: true });
       return;
     }
 
@@ -617,21 +636,28 @@ async function handleAICallRequest(
       "AI response received"
     );
 
-    const data =
-      await response.json();
-
     if (!response.ok) {
+
+      const contentType =
+        response.headers.get("content-type") || "";
+
+      let errorMsg = "Backend request failed (" + response.status + ")";
+
+      if (contentType.includes("application/json")) {
+        const errData = await response.json().catch(() => ({}));
+        errorMsg = errData?.error || errorMsg;
+      }
 
       sendResponse({
         success: false,
-
-        error:
-          data?.error ||
-          "Backend request failed"
+        error: errorMsg
       });
 
       return;
     }
+
+    const data =
+      await response.json();
 
     sendResponse({
       success: true,
