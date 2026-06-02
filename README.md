@@ -1,6 +1,6 @@
-# Orbit 🪐
+# Volt ⚡
 
-Orbit is an AI-powered Chrome extension for Adobe support engineers. It sits alongside Dynamics 365 CRM cases and gives you one-click AI assistance — first response drafts, summaries, JIRA lookups, escalation notes, and more — without leaving the case.
+Volt is an AI-powered Chrome extension for Adobe support engineers. It sits alongside Dynamics 365 CRM cases and gives you one-click AI assistance — first response drafts, summaries, JIRA lookups, escalation notes, and more — without leaving the case.
 
 ---
 
@@ -8,16 +8,16 @@ Orbit is an AI-powered Chrome extension for Adobe support engineers. It sits alo
 
 ### Installation
 
-Orbit is a Chrome extension loaded in developer mode. You will receive a ZIP or folder from your team lead.
+Volt is a Chrome extension loaded in developer mode. You will receive a ZIP or folder from your team lead.
 
 1. Open Chrome and go to `chrome://extensions`
 2. Enable **Developer mode** (toggle, top-right)
-3. Click **Load unpacked** and select the Orbit folder
-4. The 🪐 button will appear on supported pages
+3. Click **Load unpacked** and select the Volt folder
+4. The ⚡ button will appear on supported pages
 
 ### Supported Pages
 
-Orbit activates automatically on Adobe Dynamics CRM case pages:
+Volt activates automatically on Adobe Dynamics CRM case pages:
 
 - `https://adobe-ent.crm.dynamics.com/*`
 - `https://*.crm.dynamics.com/*`
@@ -26,23 +26,34 @@ Orbit activates automatically on Adobe Dynamics CRM case pages:
 
 ## Signing In
 
-Orbit uses your Adobe Okta account. You only need to sign in once — it auto-renews in the background.
+Volt uses your Adobe Okta account. You only need to sign in once — it auto-renews in the background.
 
 1. Open any Dynamics case
-2. Click the **🪐** floating button to open the panel
+2. Click the **⚡** floating button to open the panel
 3. Click **Sign In** in the panel header
 4. Complete your Adobe Okta login in the popup that appears
 5. Your name will appear in the Sign In button confirming you are authenticated
 
-> If sign-in fails with a network error, connect to **Adobe VPN** and try again.
+> If sign-in fails with a network error or you see repeated okta login attemps, connect to **Adobe VPN** and try again.
+
+### Automatic Sign-In
+
+Volt manages your session silently so you rarely need to sign in manually. Here is what happens under the hood:
+
+- When you trigger any action (button click or chat message), Volt checks whether your token is still valid
+- If the token has expired, Volt automatically attempts a **silent refresh** in the background using your refresh token — no popup, no interruption
+- If the silent refresh also fails (e.g. your refresh token has expired or you are off VPN), Volt will automatically open the **Okta login popup** so you can re-authenticate and continue without losing your request
+- Once re-authenticated, your session renews and future requests proceed normally
+
+> You do not need to manually click Sign In during normal use. The automatic popup only appears when your full session has expired and a silent refresh is not possible.
 
 ---
 
 ## Opening and Moving the Panel
 
-- **Click 🪐** to open or close the Orbit panel
+- **Click ⚡** to open or close the Volt panel
 - The panel automatically positions itself so it does not overlap the button or fall off-screen
-- **Drag the 🪐 button** anywhere on the page to reposition it
+- **Drag the ⚡ button** anywhere on the page to reposition it
 
 ---
 
@@ -81,7 +92,7 @@ After any AI response you can keep the conversation going using the text input a
 
 - Press **Enter** to send
 - Press **Shift + Enter** for a new line in your message
-- Orbit remembers the context of the current case — you do not need to re-explain it
+- Volt remembers the context of the current case — you do not need to re-explain it
 
 ---
 
@@ -101,7 +112,7 @@ Every AI response has a **Copy** button. It copies the content as rich HTML (pre
 
 ### Chat History
 
-Orbit automatically loads your previous conversation for a case when you open it. When you switch to a different case the chat reloads for that case. Each case keeps its own separate history.
+Volt automatically loads your previous conversation for a case when you open it. When you switch to a different case the chat reloads for that case. Each case keeps its own separate history.
 
 ---
 
@@ -113,10 +124,10 @@ Orbit automatically loads your previous conversation for a case when you open it
 | AI request fails with a network error | Connect to Adobe VPN |
 | Panel does not appear | Check that you are on a supported Dynamics page (`adobe-ent.crm.dynamics.com`) |
 | "No case content found" warning | Make sure the case description textarea is visible and populated before clicking a primary action |
-| Extension not loading | Go to `chrome://extensions`, find Orbit, and click the refresh icon |
+| Extension not loading | Go to `chrome://extensions`, find Volt, and click the refresh icon |
 
 ---
 
 ## Version
 
-**v8.0** — Production build targeting `http://orbit.corp.adobe.com`
+**v8.0** — Production build targeting `https://orbit.corp.adobe.com`

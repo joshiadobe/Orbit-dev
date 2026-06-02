@@ -563,7 +563,7 @@ function createUI() {
   header.id = "ai-header";
 
   const title = document.createElement("span");
-  title.textContent = "Orbit 🪐";
+  title.textContent = "Volt ⚡";
 
   const actions = document.createElement("div");
 
@@ -608,7 +608,7 @@ function createUI() {
   const input = document.createElement("textarea");
 
   input.placeholder =
-    "Ask Orbit anything about this case 🚀";
+    "Ask Volt anything about this case ⚡";
 
   input.rows = 1;
 
@@ -1574,7 +1574,7 @@ function createButton() {
   const btn = document.createElement("div");
 
   btn.id = "ai-btn";
-  btn.textContent = "🪐";
+  btn.textContent = "⚡";
 
   btn.onclick = function () {
     const open =
