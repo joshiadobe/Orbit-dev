@@ -987,6 +987,7 @@ function addMessage(text, role) {
       chatContainer.scrollTop = chatContainer.scrollHeight;
     });
   }
+
 }
 /* ---------- TYPING EFFECT ---------- */
 
@@ -1197,11 +1198,7 @@ function sendToAI(
   /* ---------- SHOW USER LABEL ---------- */
 
   if (visibleLabel) {
-
-    addMessage(
-      visibleLabel,
-      "user"
-    );
+    addMessage(visibleLabel, "user");
   }
 
   const loading =
@@ -1293,6 +1290,56 @@ function sendToAI(
       loading.remove();
 
       scrollToBottom();
+
+      /* ---------- RESPONSE PENDING (timeout — backend still running) ---------- */
+
+      if (res?.error === "RESPONSE_PENDING") {
+        const caseId = getCaseId();
+        const pendingMsg = document.createElement("div");
+        pendingMsg.className = "ai-msg";
+        pendingMsg.textContent = "⏳ Still processing, checking for response...";
+        chatContainer.appendChild(pendingMsg);
+        scrollToBottom();
+
+        // baseline: get current latestResponseId so we know when a NEW one arrives
+        chrome.runtime.sendMessage({ type: "LOAD_RECENT_MESSAGES", caseId }, (baseRes) => {
+          const baselineId = baseRes?.data?.latestResponseId || null;
+          const baselineCount = (baseRes?.data?.messages || []).length;
+
+          let attempts = 0;
+          const maxAttempts = 18; // 18 × 10s = 3 minutes
+
+          const poll = setInterval(() => {
+            attempts++;
+
+            chrome.runtime.sendMessage({ type: "LOAD_RECENT_MESSAGES", caseId }, (pollRes) => {
+              if (!pollRes?.success) return;
+
+              const msgs = pollRes.data.messages || [];
+              const newId = pollRes.data.latestResponseId;
+              const hasNew = msgs.length > baselineCount ||
+                (newId && newId !== baselineId);
+
+              if (hasNew) {
+                clearInterval(poll);
+                pendingMsg.remove();
+                const last = msgs[msgs.length - 1];
+                if (last?.role === "assistant" && last.content) {
+                  addMessage(last.content, "ai");
+                }
+                return;
+              }
+
+              if (attempts >= maxAttempts) {
+                clearInterval(poll);
+                pendingMsg.textContent = "❌ Response timed out. Try reloading the panel.";
+              }
+            });
+          }, 10000);
+        });
+
+        return;
+      }
 
       /* ---------- ERROR ---------- */
 
@@ -1402,7 +1449,7 @@ function sendToAI(
       log("AI", aiText);
 
       TYPING_EFFECT
-        ? typeMessage(aiText, "ai")
+        ? typeMessage(aiText, "ai", 8)
         : addMessage(aiText, "ai");
 
       // addMessage(
@@ -1450,7 +1497,6 @@ async function loadSavedChat() {
     cached.messages.forEach(m => {
       const role = m.role === "assistant" ? "ai" : m.role;
       const content = m.role === "user" ? resolveDisplayLabel(m.content) : m.content;
-
       addMessage(content, role);
     });
 

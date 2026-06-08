@@ -678,10 +678,9 @@ async function handleAICallRequest(
 
     sendResponse({
       success: false,
-
-      error:
-        err?.message ||
-        "Unknown background error"
+      error: err?.message === "Request timeout"
+        ? "RESPONSE_PENDING"
+        : (err?.message || "Unknown background error")
     });
   }
 }
