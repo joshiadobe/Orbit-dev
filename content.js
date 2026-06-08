@@ -1,5 +1,6 @@
 const DEBUG = true;
 const ENFORCE_NO_BOLD = false;
+const TYPING_EFFECT = false;
 
 const AI_ACTIONS = [
   {
@@ -114,6 +115,12 @@ function normalizeMarkdownTables(text) {
     /(\|.+\|\n\|[-| ]+\|\n)([\s\S]*?)(\n\n|$)/g,
     (match) => match.replace(/\n\s*\n/g, "\n")
   );
+}
+
+function normalizeMarkdown(text) {
+  if (!text) return text;
+  // ensure headings always start on their own line
+  return text.replace(/([^\n])(#{1,6} )/g, "$1\n\n$2");
 }
 
 /* ---------- STATE ---------- */
@@ -565,6 +572,11 @@ function createUI() {
   const title = document.createElement("span");
   title.textContent = "Volt ⚡";
 
+  const statusDot = document.createElement("span");
+  statusDot.id = "ai-status-dot";
+  statusDot.title = "Checking AI status...";
+  title.appendChild(statusDot);
+
   const actions = document.createElement("div");
 
   primaryBtn = document.createElement("button");
@@ -704,8 +716,9 @@ function createUI() {
     const rect = menuBtn.getBoundingClientRect();
 
     menu.style.position = "fixed";
-    menu.style.top = rect.bottom + "px";
-    menu.style.right = "20px";
+    menu.style.top = rect.bottom + 4 + "px";
+    menu.style.left = "auto";
+    menu.style.right = (window.innerWidth - rect.right) + "px";
     menu.style.display = "block";
   };
 
@@ -864,7 +877,7 @@ function addMessage(text, role) {
 
   if (md) {
     try {
-      const clean = normalizeMarkdownTables(text || "");
+      const clean = normalizeMarkdownTables(normalizeMarkdown(text || ""));
 
       const html = md.render(clean);
 
@@ -964,9 +977,16 @@ function addMessage(text, role) {
     wrapper.appendChild(copyBtn);
   }
 
+  const wasNearBottom =
+    chatContainer.scrollHeight - chatContainer.scrollTop - chatContainer.clientHeight < 120;
+
   chatContainer.appendChild(wrapper);
 
-  scrollToBottom();
+  if (wasNearBottom) {
+    requestAnimationFrame(() => {
+      chatContainer.scrollTop = chatContainer.scrollHeight;
+    });
+  }
 }
 /* ---------- TYPING EFFECT ---------- */
 
@@ -992,7 +1012,7 @@ function typeMessage(text, role = "ai", speed = 8) {
 
     if (md) {
       try {
-        const clean = normalizeMarkdownTables(current);
+        const clean = normalizeMarkdownTables(normalizeMarkdown(current));
         content.innerHTML = md.render(clean);
         rendered = true;
       } catch (e) { }
@@ -1381,10 +1401,9 @@ function sendToAI(
 
       log("AI", aiText);
 
-      typeMessage(
-        aiText,
-        "ai"
-      );
+      TYPING_EFFECT
+        ? typeMessage(aiText, "ai")
+        : addMessage(aiText, "ai");
 
       // addMessage(
       //   "⚙️ Context Mode: " +
@@ -1509,6 +1528,28 @@ async function loadSavedChat() {
   );
 }
 
+/* ---------- AI STATUS ---------- */
+
+function updateAIStatus() {
+  const dot = document.getElementById("ai-status-dot");
+  if (!dot) return;
+
+  chrome.runtime.sendMessage({ type: "CHECK_AI_STATUS" }, (res) => {
+    if (!res || !res.success) return;
+
+    dot.setAttribute("data-status", res.status);
+    dot.title = res.tooltip;
+  });
+}
+
+/* ---------- AUTH STATE WATCHER ---------- */
+
+chrome.storage.onChanged.addListener((changes, area) => {
+  if (area === "local" && changes["orbit_auth_v1"]) {
+    refreshAuthButton();
+  }
+});
+
 /* ---------- INIT ---------- */
 
 function init() {
@@ -1519,6 +1560,9 @@ function init() {
   setInterval(() => {
     chrome.runtime.sendMessage({ type: "PING" }).catch(() => {});
   }, 20000);
+
+  updateAIStatus();
+  setInterval(updateAIStatus, 120000);
 
   
 

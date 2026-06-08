@@ -114,6 +114,11 @@ chrome.runtime.onMessage.addListener(
 
       return true;
     }
+
+    if (request.type === "CHECK_AI_STATUS") {
+      handleCheckAIStatus(sendResponse);
+      return true;
+    }
   }
 );
 
@@ -629,7 +634,7 @@ async function handleAICallRequest(
               userToken
           })
         },
-        180000
+        300000
       );
 
     console.log(
@@ -678,6 +683,45 @@ async function handleAICallRequest(
         err?.message ||
         "Unknown background error"
     });
+  }
+}
+
+/* =========================================================
+   AI STATUS CHECK
+========================================================= */
+
+const STATUS_URL =
+  "https://fluffyjaws.adobe.com/api/status/openai-swedencentral";
+
+async function handleCheckAIStatus(sendResponse) {
+  try {
+    const response = await fetchWithTimeout(STATUS_URL, {}, 10000);
+
+    if (!response.ok) {
+      sendResponse({ success: false, error: "Status fetch failed" });
+      return;
+    }
+
+    const data = await response.json();
+
+    let status = "green";
+
+    if (data.activeIssueCount > 0) {
+      status = "red";
+    } else if (data.warning === true) {
+      status = "yellow";
+    }
+
+    const tooltip = data.activeIssueCount > 0
+      ? "Azure OpenAI outage detected"
+      : data.warning
+        ? (data.message || "High latency detected")
+        : "Azure OpenAI operational";
+
+    sendResponse({ success: true, status, tooltip });
+
+  } catch (err) {
+    sendResponse({ success: false, error: err.message });
   }
 }
 
