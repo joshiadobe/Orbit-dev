@@ -475,6 +475,34 @@
   border-color: var(--ai-border-light);
 }
 
+.ai-retry-btn {
+  margin-top: 8px;
+
+  padding: 4px;
+
+  border: 1px solid var(--ai-border);
+
+  border-radius: var(--ai-radius-sm);
+
+  background: transparent;
+
+  color: var(--ai-text-muted);
+
+  cursor: pointer;
+
+  line-height: 0;
+
+  transition: var(--ai-transition);
+}
+
+.ai-retry-btn:hover {
+  color: var(--ai-text);
+
+  border-color: var(--ai-border-light);
+
+  transform: rotate(-30deg);
+}
+
 /* =========================================================
    INPUT
 ========================================================= */

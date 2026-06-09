@@ -866,7 +866,7 @@ input.addEventListener(
 
 /* ---------- CHAT ---------- */
 
-function addMessage(text, role) {
+function addMessage(text, role, promptForRetry) {
   const wrapper = document.createElement("div");
 
   wrapper.className = "ai-msg";
@@ -975,6 +975,21 @@ function addMessage(text, role) {
     };
 
     wrapper.appendChild(copyBtn);
+  }
+
+  /* ---------- TRY AGAIN BUTTON (user messages) ---------- */
+
+  if (role === "user" && promptForRetry) {
+    const retryBtn = document.createElement("button");
+    retryBtn.className = "ai-retry-btn";
+    retryBtn.title = "Try Again";
+    retryBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>`;
+
+    retryBtn.onclick = () => {
+      sendToAI(promptForRetry, false, null);
+    };
+
+    wrapper.appendChild(retryBtn);
   }
 
   const wasNearBottom =
@@ -1198,7 +1213,7 @@ function sendToAI(
   /* ---------- SHOW USER LABEL ---------- */
 
   if (visibleLabel) {
-    addMessage(visibleLabel, "user");
+    addMessage(visibleLabel, "user", prompt);
   }
 
   const loading =
@@ -1497,7 +1512,7 @@ async function loadSavedChat() {
     cached.messages.forEach(m => {
       const role = m.role === "assistant" ? "ai" : m.role;
       const content = m.role === "user" ? resolveDisplayLabel(m.content) : m.content;
-      addMessage(content, role);
+      addMessage(content, role, m.role === "user" ? m.content : undefined);
     });
 
     scrollToBottom();
@@ -1561,7 +1576,7 @@ async function loadSavedChat() {
         const role = m.role === "assistant" ? "ai" : m.role;
         const content = m.role === "user" ? resolveDisplayLabel(m.content) : m.content;
 
-        addMessage(content, role);
+        addMessage(content, role, m.role === "user" ? m.content : undefined);
       });
 
       scrollToBottom();
