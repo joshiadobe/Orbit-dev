@@ -49,6 +49,20 @@ Volt manages your session silently so you rarely need to sign in manually. Here 
 
 ---
 
+## AI Status Dot
+
+A small dot next to **Volt ⚡** in the panel header shows the current health of the Azure OpenAI backend, updated every 2 minutes.
+
+| Colour | Meaning |
+|---|---|
+| 🟢 Green | Azure OpenAI operational |
+| 🟡 Yellow | High latency or warning detected |
+| 🔴 Red | Active outage detected |
+
+Hover over the dot for a one-line status message.
+
+---
+
 ## Opening and Moving the Panel
 
 - **Click ⚡** to open or close the Volt panel
@@ -93,6 +107,7 @@ After any AI response you can keep the conversation going using the text input a
 - Press **Enter** to send
 - Press **Shift + Enter** for a new line in your message
 - Volt remembers the context of the current case — you do not need to re-explain it
+- Each sent message has a **↺ retry icon** — click it to resend that exact prompt if the backend did not respond
 
 ---
 

@@ -198,7 +198,7 @@ function isTokenValid(state) {
 
   return (
     Date.now() <
-    state.expiresAt - 60 * 1000
+    state.expiresAt - 5 * 60 * 1000
   );
 }
 
