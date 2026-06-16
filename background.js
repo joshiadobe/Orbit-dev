@@ -109,6 +109,7 @@ chrome.runtime.onMessage.addListener(
     if (request.type === "AI_CALL") {
       handleAICallRequest(
         request,
+        sender,
         sendResponse
       );
 
@@ -580,8 +581,33 @@ async function handleSignOutRequest(
    AI CALL
 ========================================================= */
 
+function parseSSELocal(chunk, bufferObj) {
+  bufferObj.buffer += chunk;
+  const events = [];
+
+  while (bufferObj.buffer.includes("\n\n")) {
+    const parts = bufferObj.buffer.split("\n\n");
+    const block = parts.shift();
+    bufferObj.buffer = parts.join("\n\n");
+
+    const dataParts = [];
+    block.split("\n").forEach(function(line) {
+      if (line.startsWith("data:")) {
+        dataParts.push(line.replace("data:", "").trim());
+      }
+    });
+
+    if (dataParts.length) {
+      events.push(dataParts.join("\n"));
+    }
+  }
+
+  return events;
+}
+
 async function handleAICallRequest(
   request,
+  sender,
   sendResponse
 ) {
   try {
@@ -589,92 +615,183 @@ async function handleAICallRequest(
     if (!navigator.onLine) {
       sendResponse({
         success: false,
-        error:
-          "No internet connection"
+        error: "No internet connection"
       });
-
       return;
     }
 
-    console.log(
-      "Sending AI request..."
-    );
+    console.log("Sending AI request...");
 
     const userToken =
-      await getValidUserAccessToken(
-        true
-      );
+      await getValidUserAccessToken(true);
 
-    const response =
-      await fetchWithTimeout(
-        AUTH_CONFIG.BACKEND_URL +
-          "/chat",
-        {
-          method: "POST",
+    const tabId =
+      sender &&
+      sender.tab &&
+      typeof sender.tab.id === "number"
+        ? sender.tab.id
+        : null;
 
-          headers: {
-            "Content-Type":
-              "application/json"
-          },
+    function sendStatusUpdate(message) {
+      if (!tabId) return;
+      chrome.tabs.sendMessage(
+        tabId,
+        { type: "STATUS_UPDATE", message }
+      ).catch(() => {});
+    }
 
-          body: JSON.stringify({
-            prompt:
-              request.prompt,
-
-            caseId:
-              request.caseId ||
-              "",
-
-            fresh:
-              Boolean(
-                request.fresh
-              ),
-
-            userToken:
-              userToken
-          })
-        },
-        300000
-      );
-
-    console.log(
-      "AI response received"
+    const controller = new AbortController();
+    const timeoutId = setTimeout(
+      () => controller.abort(),
+      300000
     );
 
-    if (!response.ok) {
+    let fetchResponse;
 
-      const contentType =
-        response.headers.get("content-type") || "";
-
-      let errorMsg = "Backend request failed (" + response.status + ")";
-
-      if (contentType.includes("application/json")) {
-        const errData = await response.json().catch(() => ({}));
-        errorMsg = errData?.error || errorMsg;
-      }
-
+    try {
+      fetchResponse = await fetch(
+        AUTH_CONFIG.BACKEND_URL + "/chat",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            prompt: request.prompt,
+            caseId: request.caseId || "",
+            fresh: Boolean(request.fresh),
+            userToken: userToken,
+            attachments: request.attachments || []
+          }),
+          signal: controller.signal
+        }
+      );
+    } catch (err) {
+      clearTimeout(timeoutId);
       sendResponse({
         success: false,
-        error: errorMsg
+        error: err.name === "AbortError"
+          ? "RESPONSE_PENDING"
+          : (err.message || "Unknown error")
       });
-
       return;
     }
 
-    const data =
-      await response.json();
+    if (!fetchResponse.ok) {
+      clearTimeout(timeoutId);
+      const contentType =
+        fetchResponse.headers.get("content-type") || "";
+      let errorMsg =
+        "Backend request failed (" + fetchResponse.status + ")";
+      if (contentType.includes("application/json")) {
+        const errData =
+          await fetchResponse.json().catch(() => ({}));
+        errorMsg = errData?.error || errorMsg;
+      }
+      sendResponse({ success: false, error: errorMsg });
+      return;
+    }
 
-    sendResponse({
-      success: true,
-      data: data
-    });
+    const contentType =
+      fetchResponse.headers.get("content-type") || "";
+
+    if (contentType.includes("text/event-stream")) {
+
+      const reader = fetchResponse.body.getReader();
+      const decoder = new TextDecoder();
+      const bufferObj = { buffer: "" };
+      let streamDone = false;
+      let responseSent = false;
+
+      while (!streamDone) {
+
+        let chunkResult;
+
+        try {
+          chunkResult = await reader.read();
+        } catch (err) {
+          clearTimeout(timeoutId);
+          if (!responseSent) {
+            sendResponse({ success: false, error: "RESPONSE_PENDING" });
+          }
+          return;
+        }
+
+        if (chunkResult.done) break;
+
+        const chunk = decoder.decode(
+          chunkResult.value,
+          { stream: true }
+        );
+
+        const events = parseSSELocal(chunk, bufferObj);
+
+        for (const data of events) {
+
+          if (data === "[DONE]") {
+            streamDone = true;
+            break;
+          }
+
+          try {
+            const obj = JSON.parse(data);
+
+            if (obj.type === "status") {
+              sendStatusUpdate(obj.message);
+            }
+
+            if (obj.type === "result") {
+              clearTimeout(timeoutId);
+              console.log("AI response received");
+              responseSent = true;
+              sendResponse({
+                success: true,
+                data: {
+                  text: obj.text,
+                  responseId: obj.responseId,
+                  contextMode: obj.contextMode,
+                  orbitConversationId: obj.orbitConversationId
+                }
+              });
+              streamDone = true;
+              break;
+            }
+
+            if (obj.type === "error") {
+              clearTimeout(timeoutId);
+              responseSent = true;
+              sendResponse({
+                success: false,
+                error: obj.error || "Backend error"
+              });
+              streamDone = true;
+              break;
+            }
+
+          } catch (e) {
+            // ignore parse errors
+          }
+        }
+      }
+
+      clearTimeout(timeoutId);
+
+      if (!responseSent) {
+        sendResponse({
+          success: false,
+          error: "RESPONSE_PENDING"
+        });
+      }
+
+    } else {
+
+      clearTimeout(timeoutId);
+      const data = await fetchResponse.json();
+      console.log("AI response received");
+      sendResponse({ success: true, data });
+    }
 
   } catch (err) {
 
-    console.error(
-      "AI CALL FAILED:",
-      err
-    );
+    console.error("AI CALL FAILED:", err);
 
     sendResponse({
       success: false,

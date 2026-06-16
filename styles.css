@@ -732,3 +732,147 @@
   background: #ef4444;
   box-shadow: 0 0 4px #ef4444;
 }
+
+/* =========================================================
+   INFO BUTTON
+========================================================= */
+
+#ai-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+#ai-info-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 14px;
+  height: 14px;
+
+  flex-shrink: 0;
+
+  border-radius: 50%;
+
+  border: 1px solid var(--ai-border-light);
+
+  color: var(--ai-text-muted);
+
+  font-size: 9px;
+  font-weight: 700;
+  font-style: italic;
+  font-family: Georgia, serif;
+
+  cursor: default;
+
+  position: relative;
+}
+
+#ai-info-btn:hover {
+  border-color: var(--ai-text-muted);
+  color: var(--ai-text);
+}
+
+#ai-info-tooltip {
+  display: none;
+
+  position: absolute;
+
+  top: 20px;
+  right: 0;
+
+  width: 220px;
+
+  background: var(--ai-bg-tertiary);
+
+  border: 1px solid var(--ai-border-light);
+
+  border-radius: var(--ai-radius-md);
+
+  padding: 8px 10px;
+
+  font-size: 11px;
+  font-style: normal;
+  font-weight: 400;
+  font-family: var(--ai-font);
+
+  color: var(--ai-text);
+
+  line-height: 1.5;
+
+  z-index: 9999;
+
+  box-shadow: var(--ai-shadow-sm);
+}
+
+
+/* =========================================================
+   ATTACHMENT STRIP
+========================================================= */
+
+#ai-attachment-strip {
+  display: none;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 8px 10px 0;
+  background: #1a1a1a;
+  flex-shrink: 0;
+}
+
+.ai-attachment-chip {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--ai-bg-tertiary);
+  border: 1px solid var(--ai-border);
+  border-radius: var(--ai-radius-sm);
+  padding: 3px 6px;
+  max-width: 160px;
+}
+
+.ai-attachment-thumb {
+  width: 32px;
+  height: 32px;
+  object-fit: cover;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
+.ai-attachment-name {
+  font-size: 11px;
+  color: var(--ai-text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100px;
+}
+
+.ai-attachment-remove {
+  background: transparent !important;
+  border: none !important;
+  color: var(--ai-text-muted) !important;
+  cursor: pointer;
+  font-size: 11px;
+  padding: 0 2px !important;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.ai-attachment-remove:hover {
+  color: var(--ai-red) !important;
+}
+
+#ai-attach-btn {
+  padding: 8px !important;
+  background: var(--ai-bg-secondary) !important;
+  color: var(--ai-text-muted) !important;
+  font-size: 15px;
+  flex-shrink: 0;
+  border-radius: var(--ai-radius-md) !important;
+}
+
+#ai-attach-btn:hover {
+  color: var(--ai-text) !important;
+  background: var(--ai-bg-tertiary) !important;
+}

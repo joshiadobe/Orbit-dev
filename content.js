@@ -52,6 +52,7 @@ const PROCESSING_MESSAGES = [
   "Discovering new ways of making you wait",
 ];
 
+
 let lastProcessingIndex = -1;
 
 function getRandomProcessingMessage() {
@@ -130,6 +131,8 @@ let chatContainer;
 let primaryBtn;
 let authBtn;
 let expanded = false;
+let attachments = [];
+let currentLoadingEl = null;
 
 const LOCAL_CACHE_KEY =
   "orbit_recent_cache_v1";
@@ -559,6 +562,91 @@ function createLinkedText(container, text) {
   }
 }
 
+/* ---------- ATTACHMENT HELPERS ---------- */
+
+function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+function renderPreviewStrip() {
+  const strip = document.getElementById("ai-attachment-strip");
+  if (!strip) return;
+
+  strip.innerHTML = "";
+
+  if (attachments.length === 0) {
+    strip.style.display = "none";
+    return;
+  }
+
+  strip.style.display = "flex";
+
+  attachments.forEach((att, index) => {
+    const chip = document.createElement("div");
+    chip.className = "ai-attachment-chip";
+
+    if (att.previewUrl) {
+      const img = document.createElement("img");
+      img.src = att.previewUrl;
+      img.className = "ai-attachment-thumb";
+      chip.appendChild(img);
+    } else {
+      const name = document.createElement("span");
+      name.className = "ai-attachment-name";
+      name.textContent = att.fileName;
+      chip.appendChild(name);
+    }
+
+    const removeBtn = document.createElement("button");
+    removeBtn.textContent = "✕";
+    removeBtn.className = "ai-attachment-remove";
+    removeBtn.onclick = () => {
+      attachments.splice(index, 1);
+      renderPreviewStrip();
+    };
+
+    chip.appendChild(removeBtn);
+    strip.appendChild(chip);
+  });
+}
+
+async function handleFileAttach(files) {
+  const TWENTY_MB = 20 * 1024 * 1024;
+  const THIRTY_MB = 30 * 1024 * 1024;
+
+  for (const file of files) {
+    if (file.size > TWENTY_MB) {
+      addMessage("⚠️ \"" + file.name + "\" exceeds 20MB limit and was skipped.", "system");
+      continue;
+    }
+
+    const currentTotal = attachments.reduce((sum, a) => sum + (a.size || 0), 0);
+
+    if (currentTotal + file.size > THIRTY_MB) {
+      addMessage("⚠️ Total attachments exceed 30MB limit. \"" + file.name + "\" was skipped.", "system");
+      continue;
+    }
+
+    const fileData = await fileToBase64(file);
+    const isImage = file.type.startsWith("image/");
+
+    attachments.push({
+      fileName: file.name,
+      mimeType: file.type || "application/octet-stream",
+      fileData,
+      size: file.size,
+      previewUrl: isImage ? fileData : null
+    });
+  }
+
+  renderPreviewStrip();
+}
+
 /* ---------- UI ---------- */
 
 function createUI() {
@@ -576,6 +664,41 @@ function createUI() {
   statusDot.id = "ai-status-dot";
   statusDot.title = "Checking AI status...";
   title.appendChild(statusDot);
+
+  const infoBtn = document.createElement("span");
+  infoBtn.id = "ai-info-btn";
+  infoBtn.textContent = "i";
+
+  const infoTooltip = document.createElement("div");
+  infoTooltip.id = "ai-info-tooltip";
+  infoTooltip.textContent = "🐛 Volt being gremlins? Smash Ctrl+Shift+R — fixes 99% of weirdness.";
+  infoBtn.appendChild(infoTooltip);
+
+  infoBtn.addEventListener("mouseenter", () => {
+    infoTooltip.style.display = "block";
+  });
+
+  infoBtn.addEventListener("mouseleave", () => {
+    if (!infoBtn.classList.contains("pinned")) {
+      infoTooltip.style.display = "none";
+    }
+  });
+
+  infoBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    const pinned = infoBtn.classList.toggle("pinned");
+    infoTooltip.style.display = pinned ? "block" : "none";
+  });
+
+  document.addEventListener("click", () => {
+    infoBtn.classList.remove("pinned");
+    infoTooltip.style.display = "none";
+  });
+
+  const titleRow = document.createElement("div");
+  titleRow.id = "ai-title-row";
+  titleRow.appendChild(title);
+  titleRow.appendChild(infoBtn);
 
   const actions = document.createElement("div");
 
@@ -609,10 +732,24 @@ function createUI() {
     menuBtn
   );
 
-  header.append(title, actions);
+  header.append(titleRow, actions);
 
   chatContainer = document.createElement("div");
   chatContainer.id = "ai-chat";
+
+  const attachmentStrip = document.createElement("div");
+  attachmentStrip.id = "ai-attachment-strip";
+
+  const fileInput = document.createElement("input");
+  fileInput.type = "file";
+  fileInput.multiple = true;
+  fileInput.style.display = "none";
+  fileInput.id = "ai-file-input";
+
+  const attachBtn = document.createElement("button");
+  attachBtn.textContent = "📎";
+  attachBtn.id = "ai-attach-btn";
+  attachBtn.title = "Attach files";
 
   const inputBox = document.createElement("div");
   inputBox.id = "ai-input-box";
@@ -620,7 +757,7 @@ function createUI() {
   const input = document.createElement("textarea");
 
   input.placeholder =
-    "Ask Volt anything about this case ⚡";
+    "Ask Volt ⚡";
 
   input.rows = 1;
 
@@ -629,9 +766,9 @@ function createUI() {
   const sendBtn = document.createElement("button");
   sendBtn.textContent = "Send";
 
-  inputBox.append(input, sendBtn);
+  inputBox.append(fileInput, attachBtn, input, sendBtn);
 
-  panel.append(header, chatContainer, inputBox);
+  panel.append(header, chatContainer, attachmentStrip, inputBox);
 
   document.body.appendChild(panel);
 
@@ -861,6 +998,26 @@ input.addEventListener(
   }
 );
 
+  attachBtn.onclick = () => fileInput.click();
+
+  fileInput.onchange = async () => {
+    if (fileInput.files.length) {
+      await handleFileAttach(Array.from(fileInput.files));
+      fileInput.value = "";
+    }
+  };
+
+  input.addEventListener("paste", async (e) => {
+    const items = e.clipboardData?.items;
+    if (!items) return;
+    for (const item of items) {
+      if (item.type.startsWith("image/")) {
+        e.preventDefault();
+        const file = item.getAsFile();
+        if (file) await handleFileAttach([file]);
+      }
+    }
+  });
 
 }
 
@@ -1183,7 +1340,7 @@ function resolveDisplayLabel(content) {
 function handleSend(input) {
   const text = input.value.trim();
 
-  if (!text) return;
+  if (!text && attachments.length === 0) return;
 
   input.value = "";
   input.style.height = "";
@@ -1192,13 +1349,17 @@ function handleSend(input) {
 
   const visibleLabel = resolveDisplayLabel(text);
 
+  const currentAttachments = [...attachments];
+  attachments = [];
+  renderPreviewStrip();
+
   Analytics.track("orbit.followup.sent", {
     caseId: getCaseId(),
     inputLength: text.length
   });
 
   sendToAI(
-  prompt, false, visibleLabel
+  prompt, false, visibleLabel, currentAttachments
 );
 }
 
@@ -1207,8 +1368,10 @@ function handleSend(input) {
 function sendToAI(
   prompt,
   forceFresh,
-  visibleLabel
+  visibleLabel,
+  currentAttachments
 ) {
+  if (!currentAttachments) currentAttachments = [];
 
   /* ---------- SHOW USER LABEL ---------- */
 
@@ -1227,23 +1390,18 @@ function sendToAI(
 
   let dots = 0;
 
-  loading.textContent =
-    baseMessage;
+  loading.textContent = baseMessage;
 
-  const dotsInterval =
-    setInterval(() => {
-
-      dots = (dots + 1) % 4;
-
-      loading.textContent =
-        baseMessage +
-        ".".repeat(dots);
-
-    }, 500);
+  const dotsInterval = setInterval(() => {
+    dots = (dots + 1) % 4;
+    loading.textContent = baseMessage + ".".repeat(dots);
+  }, 500);
 
   chatContainer.appendChild(
     loading
   );
+
+  currentLoadingEl = loading;
 
   scrollToBottom();
 
@@ -1293,7 +1451,10 @@ function sendToAI(
       caseId:
         getCaseId(),
 
-      fresh
+      fresh,
+
+      attachments:
+        currentAttachments
     },
 
     res => {
@@ -1301,6 +1462,8 @@ function sendToAI(
       clearInterval(
         dotsInterval
       );
+
+      currentLoadingEl = null;
 
       loading.remove();
 
@@ -1608,6 +1771,16 @@ function updateAIStatus() {
 chrome.storage.onChanged.addListener((changes, area) => {
   if (area === "local" && changes["orbit_auth_v1"]) {
     refreshAuthButton();
+  }
+});
+
+chrome.runtime.onMessage.addListener((request) => {
+  if (
+    request &&
+    request.type === "STATUS_UPDATE" &&
+    currentLoadingEl
+  ) {
+    currentLoadingEl.textContent = request.message;
   }
 });
 
