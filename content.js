@@ -1782,6 +1782,7 @@ chrome.runtime.onMessage.addListener((request) => {
   ) {
     currentLoadingEl.textContent = request.message;
   }
+
 });
 
 /* ---------- INIT ---------- */

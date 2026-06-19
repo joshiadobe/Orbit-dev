@@ -4,23 +4,33 @@ Volt is an AI-powered Chrome extension for Adobe support engineers. It sits alon
 
 ---
 
+## Prerequisites
+
+Before installing, you must be a member of the **GRP-ORBITEXTENSION** IAM group. Request access through the standard IAM self-service portal if you are not already subscribed.
+
+[Request Access →](#)
+
+---
+
 ## Getting Started
 
 ### Installation
 
-Volt is a Chrome extension loaded in developer mode. You will receive a ZIP or folder from your team lead.
+Volt is a Chrome extension loaded in developer mode.
+
+[Download Volt ⚡](#)
 
 1. Open Chrome and go to `chrome://extensions`
 2. Enable **Developer mode** (toggle, top-right)
 3. Click **Load unpacked** and select the Volt folder
 4. The ⚡ button will appear on supported pages
+5. Copy your **Extension ID** (shown under the Volt card on `chrome://extensions`) and share it with [abjoshi@adobe.com](mailto:abjoshi@adobe.com) to get activated
 
 ### Supported Pages
 
 Volt activates automatically on Adobe Dynamics CRM case pages:
 
 - `https://adobe-ent.crm.dynamics.com/*`
-- `https://*.crm.dynamics.com/*`
 
 ---
 
@@ -51,7 +61,7 @@ Volt manages your session silently so you rarely need to sign in manually. Here 
 
 ## AI Status Dot
 
-A small dot next to **Volt ⚡** in the panel header shows the current health of the Azure OpenAI backend, updated every 2 minutes.
+A small dot next to **Volt ⚡** in the panel header shows the current health of the Azure OpenAI backend, updated every 2 minutes. A small **i** button on the right of the title row shows a quick help tip on hover or click.
 
 | Colour | Meaning |
 |---|---|
@@ -109,6 +119,15 @@ After any AI response you can keep the conversation going using the text input a
 - Volt remembers the context of the current case — you do not need to re-explain it
 - Each sent message has a **↺ retry icon** — click it to resend that exact prompt if the backend did not respond
 
+### Attaching Files
+
+Click the **📎** button next to the input to attach files, or paste an image directly from your clipboard.
+
+- Maximum **20 MB** per file
+- Maximum **30 MB** total across all attachments in one message
+- Images show a thumbnail preview; other files show the file name
+- Click **✕** on a chip to remove an attachment before sending
+
 ---
 
 ## Copying Responses
@@ -145,4 +164,4 @@ Volt automatically loads your previous conversation for a case when you open it.
 
 ## Version
 
-**v8.0** — Production build targeting `https://orbit.corp.adobe.com`
+**v1.0** — Production build targeting `https://orbit.corp.adobe.com`
